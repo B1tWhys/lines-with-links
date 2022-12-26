@@ -1,30 +1,47 @@
 import pytest
-import logging
-from sqlalchemy import text, func, select
-
+from typer.testing import CliRunner
 from video_processing.db import *
 
-# logging.getLogger("video_processing").setLevel(logging.DEBUG)
-log = logging.getLogger("video_processing.tests")
+runner = CliRunner()
+
 
 class TestPersistence:
-    def test_can_upsert_channel(self, in_mem_db: Engine):
+    def test_extracted_data_is_persisted(self, in_mem_db: Engine, mocker):
+        # mock position extraction function
+        test_fen = "2kr3r/ppp2pp1/5n1p/4n1N1/2Pqp1b1/3P2P1/P1PQ1PBP/1RB2RK1"
+        extracted_data = {
+            test_fen: [
+                1, 2, 3, 4
+            ],
+            "8/1pq2ppk/r1p1nn1p/p1b1p3/P1N1P1BP/2P1B1P1/1P2QPK1/3R4": [
+                5, 6, 7, 8
+            ]
+        }
+        mocker.patch("video_processing.position_extraction.extract_fen", return_value=extracted_data)
+
+        from video_processing import main
+
+        result = runner.invoke(main.app,
+                      ["https://www.youtube.com/watch?v=TsR154sQMVo", "--sqlite-db", "--db-password", "foo"])
+        if result.exception:
+            raise result.exception
+
         with Session(in_mem_db) as session:
-            result = session.execute(select(Channel)).first()
-            assert result is None
+            saved_channel: Channel = session.get(Channel, "UCweCc7bSMX5J4jEH7HFImng")
+            assert saved_channel is not None
 
-            save_channel("chan-id", "chan-name")
-            saved_channel: Channel = session.get(Channel, "chan-id")
-            assert saved_channel.id == "chan-id"
-            assert saved_channel.channel_name == "chan-name"
+            vids = saved_channel.videos
+            assert len(vids) == 1
+            saved_video = session.get(Video, "TsR154sQMVo")
+            assert saved_video is not None
+            assert saved_video.channel.id == saved_channel.id
 
-            save_channel("chan-id", "chan-name")
-            assert session.query(func.count()).first()[0] == 1
+            assert len(saved_video.positions) == 2
+            assert len(saved_video.position_sightings) == 8
 
-    def test_can_upsert_video(self, in_mem_db: Engine):
-        with Session(in_mem_db):
-            save_channel("chan-id", "chan-name")
-            save_video(video_id="vid-id", channel_id="chan-id", title="title", thumbnail_url="thmb")
+            saved_position = session.execute(select(Position).where(Position.fen == test_fen)).scalars().one()
+            assert len(saved_position.sightings) == 4
+
 
 
 @pytest.fixture

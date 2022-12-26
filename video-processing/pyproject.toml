@@ -22,13 +22,14 @@ sqlalchemy = "^1.4.45"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
 pytest-watch = "^4.2.0"
+pytest-mock = "^3.10.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-process-video = "video_processing.main:main"
+process-video = "video_processing.main:app"
 
 [pytest]
 log_level = "INFO"

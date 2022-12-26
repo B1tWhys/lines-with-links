@@ -24,9 +24,9 @@ def extract_position(img: Image) -> str | None:
     return shortenFEN(fen)
 
 
-def extract_fen(yt: YouTube) -> dict[str, list[str]]:
+def extract_fen(yt: YouTube) -> dict[str, list[float]]:
     stream_url, fps = _resolve_download_url(yt)
-    log.debug(f"Stream selected for video {yt.video_id}: {stream_url}")
+    log.info(f"Stream selected for video {yt.video_id}: {stream_url}")
 
     result = defaultdict(list)
     prev_fen = None

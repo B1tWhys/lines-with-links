@@ -9,6 +9,7 @@ from collections import defaultdict
 log = logging.getLogger('video_processing')
 predictor = ChessboardPredictor()
 
+
 class VideoProcessingException(Exception):
     pass
 
@@ -23,9 +24,9 @@ def extract_position(img: Image) -> str | None:
     return shortenFEN(fen)
 
 
-def process_yt_video(url: str) -> dict[str, list[str]]:
-    stream_url, fps = _resolve_download_url(url)
-    log.debug(f"Stream selected for video {url}: {stream_url}")
+def extract_fen(yt: YouTube) -> dict[str, list[str]]:
+    stream_url, fps = _resolve_download_url(yt)
+    log.debug(f"Stream selected for video {yt.video_id}: {stream_url}")
 
     result = defaultdict(list)
     prev_fen = None
@@ -42,13 +43,13 @@ def process_yt_video(url: str) -> dict[str, list[str]]:
     return result
 
 
-
-def _resolve_download_url(vid_url):
-    yt = YouTube(vid_url)
+def _resolve_download_url(yt: YouTube):
     stream = yt.streams.filter(only_video=True, res='480p', subtype="mp4").first()
     if stream is None:
-        raise VideoProcessingException(f"Failed to process {vid_url}, no streams found. Available streams were: {yt.streams}")
+        raise VideoProcessingException(f"Failed to process {yt.video_id}, no worthy streams found. "
+                                       f"Available streams were: {yt.streams}")
     return stream.url, stream.fps
+
 
 def stream_pil_images(stream_url):
     cap = cv2.VideoCapture(stream_url)

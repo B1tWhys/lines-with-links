@@ -25,6 +25,6 @@ export async function getSightingsOfPosition(
 		.leftJoin('videos as v', 'ps.video_id', 'v.id')
 		.leftJoin('channels as c', 'v.channel_id', 'c.id')
 		.where('p.fen', '=', fen);
-	console.info(`Fetched ${result.length} results from db`);
+	console.info(`Fetched ${result.length} results from db for fen ${fen}`);
 	return result;
 }

@@ -11,25 +11,20 @@ const db = knex({
 export async function getSightingsOfPosition(
 	fen: string
 ): Promise<Array<PositionSightingMetadata>> {
-	await new Promise((resolve) => setTimeout(resolve, 2000));
-	return [
-		{
-			videoTitle:
-				"Miniature Game | Scholar's Mate Vs Sicilian Defense | GM Naroditsky’s Top Theory Speedrun",
-			videoId: 'GqdveDSL2SA',
-			thumbnailUrl: 'https://i.ytimg.com/vi/GqdveDSL2SA/sddefault.jpg',
-			secIntoVideo: 0,
-			channelName: 'Daniel Naroditsky',
-			channelUrl: 'https://www.youtube.com/@DanielNaroditskyGM'
-		},
-		{
-			videoTitle:
-				"Miniature Game | Scholar's Mate Vs Sicilian Defense | GM Naroditsky’s Top Theory Speedrun",
-			videoId: 'GqdveDSL2SA',
-			thumbnailUrl: 'https://i.ytimg.com/vi/GqdveDSL2SA/sddefault.jpg',
-			secIntoVideo: 27.9,
-			channelName: 'Daniel Naroditsky',
-			channelUrl: 'https://www.youtube.com/@DanielNaroditskyGM'
-		}
-	];
+	const result = await db
+		.select(
+			'v.id as videoId',
+			'v.title as videoTitle',
+			'v.thumbnail_url as thumbnailUrl',
+			'c.channel_name as channelName',
+			'c.channel_url as channelUrl',
+			'ps.sec_into_video as secIntoVideo'
+		)
+		.from('position_sightings as ps')
+		.leftJoin('positions as p', 'ps.position_id', 'p.id')
+		.leftJoin('videos as v', 'ps.video_id', 'v.id')
+		.leftJoin('channels as c', 'v.channel_id', 'c.id')
+		.where('p.fen', '=', fen);
+	console.info(`Fetched ${result.length} results from db`);
+	return result;
 }

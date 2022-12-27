@@ -17,6 +17,7 @@ class Channel(Base):
 
     id = Column(String, primary_key=True)
     channel_name = Column(String, nullable=False)
+    channel_url = Column(String, nullable=False)
 
     videos = relationship("Video", back_populates="channel")
 
@@ -87,11 +88,11 @@ def init_db(hostname, port, username, password, dbname):
     log.debug("DB configured")
 
 
-def save_channel(id: str, channel_name: str):
+def save_channel(id: str, channel_name: str, channel_url: str):
     with Session(_engine) as session:
         if session.get(Channel, id) is None:
             log.info(f"Persisting new channel: {id}")
-            session.add(Channel(id=id, channel_name=channel_name))
+            session.add(Channel(id=id, channel_name=channel_name, channel_url=channel_url))
             session.commit()
 
 

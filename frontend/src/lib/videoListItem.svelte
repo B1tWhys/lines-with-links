@@ -1,22 +1,23 @@
 <script lang="ts">
-	import type VideoMetadata from './types/videoMetadata';
+	import type PositionSightingMetadata from './types/positionSightingMetadata';
 
-	export let videoMetadata: VideoMetadata;
-	$: vidLink = new URL(videoMetadata.videoUrl);
-	$: vidLink.searchParams.append('t', `${videoMetadata.startAt}s`);
+	export let positionSighting: PositionSightingMetadata;
+	let url = new URL('https://www.youtube.com/watch');
+	url.searchParams.append('v', positionSighting.videoId);
+	url.searchParams.append('t', `${positionSighting.secIntoVideo}s`);
 </script>
 
-<li>
-	<a class="flex flex-row" href={vidLink.toString()} target="_blank" rel="noreferrer">
+<li class="my-2">
+	<a class="flex flex-row" href={url.toString()} target="_blank" rel="noreferrer">
 		<img
 			class="mr-2 h-24 w-40"
-			src={videoMetadata.thumbnailUrl}
-			alt="{videoMetadata.title} - {videoMetadata.channelName}"
+			src={positionSighting.thumbnailUrl}
+			alt="{positionSighting.videoTitle} - {positionSighting.channelName}"
 		/>
 		<div>
-			<div class="text-white font-bold mb-3">{videoMetadata.title}</div>
+			<div class="text-white font-bold mb-3">{positionSighting.videoTitle}</div>
 			<div class="text-slate-300 text-sm">
-				<p>{videoMetadata.channelName}</p>
+				<a href={positionSighting.channelUrl} target="_blank" rel="noreferrer">{positionSighting.channelName}</a>
 			</div>
 		</div>
 	</a>

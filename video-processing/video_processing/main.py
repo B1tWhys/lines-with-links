@@ -26,7 +26,7 @@ def process(url: str,
 
     yt = pytube.YouTube(url)
     pt_channel = pytube.Channel(yt.channel_url)
-    save_channel(pt_channel.channel_id, pt_channel.channel_name)
+    save_channel(pt_channel.channel_id, pt_channel.channel_name, pt_channel.channel_url)
     save_video(yt.video_id, pt_channel.channel_id, yt.title, yt.thumbnail_url)
 
     fen_timestamps = extract_fen(yt)

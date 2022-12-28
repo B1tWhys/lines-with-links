@@ -1,13 +1,17 @@
 import pytube
 
-from video_processing.position_extraction import extract_fen
+from video_processing.position_extraction import process_video
 from video_processing.db import *
 import logging
 import typer
+from tqdm.contrib.logging import logging_redirect_tqdm
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
-logging.getLogger('video_processing').setLevel(logging.INFO)
-log = logging.getLogger('video_processing.main')
+logging.getLogger('video_processing')
+log = logging.getLogger('video_processing')
+log.setLevel(logging.DEBUG)
+
 app = typer.Typer()
 
 
@@ -29,13 +33,14 @@ def process(url: str,
     save_channel(pt_channel.channel_id, pt_channel.channel_name, pt_channel.channel_url)
     save_video(yt.video_id, pt_channel.channel_id, yt.title, yt.thumbnail_url)
 
-    fen_timestamps = extract_fen(yt)
+    with logging_redirect_tqdm():
+        fen_timestamps = process_video(yt)
+        with tqdm(total=yt.length, smoothing=0) as bar:
+            for fen, timestamp in fen_timestamps:
+                log.debug(f"saving position {fen} : {timestamp:0.3f}")
+                save_position_sighting(yt.video_id, fen, round(timestamp, 2))
+                bar.update(timestamp - bar.n)
 
-    for fen, timestamps in fen_timestamps.items():
-        for timestamp in timestamps:
-            save_position_sighting(yt.video_id, fen, round(timestamp, 2))
 
-if __name__ == "__main__":
-    app()
-    # timestamps = process_yt_video("https://www.youtube.com/watch?v=vRAXtMOcnVI")
-    # print(json.dumps(timestamps, indent=2))
+    if __name__ == "__main__":
+        app()

@@ -17,7 +17,7 @@ class TestPersistence:
                 5, 6, 7, 8
             ]
         }
-        mocker.patch("video_processing.position_extraction.extract_fen", return_value=extracted_data)
+        mocker.patch("video_processing.position_extraction.process_video", return_value=extracted_data)
 
         from video_processing import main
 

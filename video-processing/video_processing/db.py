@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session, declarative_base, relationship
 from sqlalchemy.engine import Engine, URL, Row
 import logging
 
-log = logging.getLogger("video_processing.db")
+log = logging.getLogger("video_processing")
 
 _engine: Engine
 

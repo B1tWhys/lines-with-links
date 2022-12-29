@@ -116,3 +116,9 @@ def save_position_sighting(video_id: str, fen: str, sec_into_video: float):
         else:
             pos_row.sightings.append(sighting)
         session.commit()
+
+
+def video_already_processed(video_id: str):
+    with Session(_engine) as session:
+        vid = session.execute(select(Video).where(Video.id == video_id)).first()
+        return vid is not None

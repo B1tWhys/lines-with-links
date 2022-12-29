@@ -16,13 +16,13 @@ app = typer.Typer()
 
 
 @app.command()
-def process(url: str,
-            db_hostname: str = typer.Option("localhost", envvar="DB_HOSTNAME"),
-            db_username: str = typer.Option("postgres", envvar="DB_USERNAME"),
-            db_password: str = typer.Option(..., prompt=True, hide_input=True, envvar="DB_PASSWORD"),
-            db_port: int = typer.Option(default=5432, envvar="DB_PORT"),
-            db_name: str = typer.Option("postgres", envvar="DB_NAME"),
-            sqlite_db: bool = typer.Option(False)):
+def video(url: str,
+          db_hostname: str = typer.Option("localhost", envvar="DB_HOSTNAME"),
+          db_username: str = typer.Option("postgres", envvar="DB_USERNAME"),
+          db_password: str = typer.Option(..., prompt=True, hide_input=True, envvar="DB_PASSWORD"),
+          db_port: int = typer.Option(default=5432, envvar="DB_PORT"),
+          db_name: str = typer.Option("postgres", envvar="DB_NAME"),
+          sqlite_db: bool = typer.Option(False)):
     if sqlite_db:
         init_sqlite_db()
     else:
@@ -42,5 +42,33 @@ def process(url: str,
                 bar.update(timestamp - bar.n)
 
 
-    if __name__ == "__main__":
-        app()
+@app.command()
+def channel(url: str,
+            db_hostname: str = typer.Option("localhost", envvar="DB_HOSTNAME"),
+            db_username: str = typer.Option("postgres", envvar="DB_USERNAME"),
+            db_password: str = typer.Option(..., prompt=True, hide_input=True, envvar="DB_PASSWORD"),
+            db_port: int = typer.Option(default=5432, envvar="DB_PORT"),
+            db_name: str = typer.Option("postgres", envvar="DB_NAME"),
+            sqlite_db: bool = typer.Option(False)):
+    if sqlite_db:
+        init_sqlite_db()
+    else:
+        init_db(db_hostname, db_port, db_username, db_password, db_name)
+
+    pt_channel = pytube.Channel(url)
+    save_channel(pt_channel.channel_id, pt_channel.channel_name, pt_channel.channel_url)
+
+    vids = [v for v in pt_channel.videos if not video_already_processed(v.video_id)]
+
+    with logging_redirect_tqdm():
+        for vid in vids:
+            log.info(f"Processing video: {vid.title}")
+            with tqdm(total=vid.length, smoothing=0) as bar:
+                for fen, timestamp in process_video(vid):
+                    log.debug(f"saving position {fen} : {timestamp:0.3f}")
+                    save_position_sighting(vid.video_id, fen, round(timestamp, 2))
+                    bar.update(timestamp - bar.n)
+
+
+if __name__ == "__main__":
+    app()

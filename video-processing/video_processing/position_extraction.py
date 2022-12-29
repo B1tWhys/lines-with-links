@@ -4,7 +4,7 @@ from .tensorflow.helper_functions import shortenFEN, unflipFEN, predictSideFromF
 from pytube import YouTube
 import cv2
 import logging
-from collections import defaultdict
+from typing import Generator, Tuple
 
 log = logging.getLogger('video_processing')
 predictor = ChessboardPredictor()
@@ -14,7 +14,26 @@ class VideoProcessingException(Exception):
     pass
 
 
-def extract_position(img: Image) -> str | None:
+def process_video(yt: YouTube, required_position_duration_frames=10) -> Generator[Tuple[str, float], None, None]:
+    stream_url, fps = _resolve_download_url(yt)
+    log.info(f"Stream selected for video {yt.video_id}: {stream_url}")
+
+    prev_fen = None
+    position_history = [None] * required_position_duration_frames
+    for frameNum, pil_frame in enumerate(stream_pil_images(stream_url)):
+        sec_into_video = frameNum / fps
+        fen = _extract_position(pil_frame)
+        position_history = position_history[1:] + [fen]
+        if len(set(position_history)) == 1:
+            if fen is None:
+                log.debug(f"No fen found at {frameNum} ({sec_into_video}s), skipping frame")
+                continue
+            if fen != prev_fen and len(set(position_history)) == 1:
+                log.debug(f"New position found at {frameNum} ({sec_into_video:0.3f}s)")
+                prev_fen = fen
+                yield fen, sec_into_video
+
+def _extract_position(img: Image) -> str | None:
     fen, certainty = predictor.makePrediction(img)
     if fen is None:
         return None
@@ -23,28 +42,6 @@ def extract_position(img: Image) -> str | None:
         fen = unflipFEN(fen)
     return shortenFEN(fen)
 
-
-def process_video(yt: YouTube, required_position_duration_frames=10) -> dict[str, list[float]]:
-    stream_url, fps = _resolve_download_url(yt)
-    log.info(f"Stream selected for video {yt.video_id}: {stream_url}")
-
-    result = defaultdict(list)
-    prev_fen = None
-    position_history = [None] * required_position_duration_frames
-    for frameNum, pil_frame in enumerate(stream_pil_images(stream_url)):
-        sec_into_video = frameNum / fps
-        fen = extract_position(pil_frame)
-        position_history = position_history[1:] + [fen]
-        if len(set(position_history)) == 1:
-            if fen is None:
-                log.debug(f"No fen found at {frameNum} ({sec_into_video}s), skipping frame")
-                continue
-            if fen != prev_fen and len(set(position_history)) == 1:
-                log.debug(f"New position found at {frameNum} ({sec_into_video:0.3f}s)")
-                result[fen].append(sec_into_video)
-                prev_fen = fen
-                yield fen, sec_into_video
-    return result
 
 
 def _resolve_download_url(yt: YouTube):

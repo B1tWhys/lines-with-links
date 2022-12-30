@@ -56,14 +56,19 @@ def channel(url: str,
         init_db(db_hostname, db_port, db_username, db_password, db_name)
 
     pt_channel = pytube.Channel(url)
+    log.info(f"Processing videos on channel: {pt_channel.channel_name}")
     save_channel(pt_channel.channel_id, pt_channel.channel_name, pt_channel.channel_url)
 
+    log.debug(f"Fetching list of videos...")
     vids = [v for v in pt_channel.videos if not video_already_processed(v.video_id)]
+    log.debug(f"{len(vids)} videos found")
 
     with logging_redirect_tqdm():
-        for vid in vids:
+        for vid in tqdm(vids):
+            save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
             log.info(f"Processing video: {vid.title}")
             with tqdm(total=vid.length, smoothing=0) as bar:
+                bar.set_description(vid.video_id)
                 for fen, timestamp in process_video(vid):
                     log.debug(f"saving position {fen} : {timestamp:0.3f}")
                     save_position_sighting(vid.video_id, fen, round(timestamp, 2))

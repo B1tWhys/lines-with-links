@@ -33,6 +33,7 @@ def process_video(yt: YouTube, required_position_duration_frames=10) -> Generato
                 prev_fen = fen
                 yield fen, sec_into_video
 
+
 def _extract_position(img: Image) -> str | None:
     fen, certainty = predictor.makePrediction(img)
     if fen is None:
@@ -41,7 +42,6 @@ def _extract_position(img: Image) -> str | None:
     if side == 'b':
         fen = unflipFEN(fen)
     return shortenFEN(fen)
-
 
 
 def _resolve_download_url(yt: YouTube):

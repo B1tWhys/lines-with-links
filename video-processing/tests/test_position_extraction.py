@@ -1,4 +1,4 @@
-from video_processing.position_extraction import _extract_position
+from video_processing.video_analysis import _extract_position
 from pathlib import Path
 from PIL import Image
 

@@ -40,6 +40,15 @@ class FrameSource(ABC):
     def fps(self) -> float:
         pass
 
+    @property
+    @abstractmethod
+    def video_id(self) -> str:
+        pass
+
+    @property
+    def current_sec_into_video(self) -> float:
+        return self.current_frame / self.fps
+
     def stream_frames(self) -> Generator[Image.Image, None, None]:
         """
         Stream the video source into PIL images
@@ -64,6 +73,7 @@ class FrameSource(ABC):
 
 
 class YoutubeFrameSource(FrameSource):
+
     yt_video: YouTube
     _stream: Stream
 
@@ -90,3 +100,7 @@ class YoutubeFrameSource(FrameSource):
     @cached_property
     def fps(self) -> float:
         return self._stream.fps
+
+    @cached_property
+    def video_id(self) -> str:
+        return self.yt_video.video_id

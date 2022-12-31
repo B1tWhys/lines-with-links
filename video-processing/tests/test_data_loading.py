@@ -11,3 +11,4 @@ class TestYoutubeVideoLoading:
         assert first_frame.height == 480
         assert first_frame.width == 854
         assert frame_source.fps == 30
+        assert frame_source.video_id == "k4T6TJGOSA0"

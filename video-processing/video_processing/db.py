@@ -122,3 +122,10 @@ def video_already_processed(video_id: str):
     with Session(_engine) as session:
         vid = session.execute(select(Video).where(Video.id == video_id)).first()
         return vid is not None
+
+
+def all_processed_video_ids() -> list[str]:
+    with Session(_engine) as session:
+        ret = list(session.execute(select(Video.id)).scalars().all())
+        log.debug(f"All {len(ret)} previously processed video id's received")
+        return ret

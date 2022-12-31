@@ -40,6 +40,8 @@ class TestPersistence:
             saved_position = session.execute(select(Position).where(Position.fen == test_fen1)).scalars().one()
             assert len(saved_position.sightings) == 4
 
+            assert all_processed_video_ids() == ['TsR154sQMVo']
+
 
 
 @pytest.fixture

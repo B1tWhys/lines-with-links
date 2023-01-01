@@ -50,25 +50,12 @@ class FenExtractionResult:
         return f"vid_id: {self.vid_id}, sec_into_video: {self.sec_into_video:0.3f}, fen: {self.fen}"
 
 
-def frame_analysis_worker(inputFrameQueue: Queue, outputFenQueue: Queue):
-    log.info("Starting frame analysis worker")
-    while True:
-        frame: Frame = inputFrameQueue.get()
-        if frame is None:
-            break
-        fen = extract_fen(frame.img)
-        if fen is not None:
-            result = FenExtractionResult(frame.vid_id, frame.sec_into_video, fen)
-            outputFenQueue.put(result)
-
-
 def extract_fen(img: Image.Image) -> str | None:
     # Look for chessboard in image, get corners and split chessboard into tiles
     tiles, _ = chessboard_finder.findGrayscaleTilesInImage(img)
 
     # Exit on failure to find chessboard in image
     if tiles is None:
-        log.debug("Couldn't find chessboard in image")
         return None
 
     # Make prediction on input tiles. Resulting fen *may* be flipped along y-axis

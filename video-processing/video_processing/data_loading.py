@@ -5,6 +5,7 @@ import cv2
 import logging
 from pytube import YouTube, Stream
 from functools import cached_property, cache
+from queue import Queue
 
 log = logging.getLogger(__name__)
 
@@ -19,9 +20,13 @@ class FrameSource(ABC):
     """
 
     current_frame: int
+    img_output_queue: Queue
+    running: bool
 
     def __init__(self):
         self.current_frame = 0
+        self.img_output_queue = Queue(30)
+        self.running = True
 
     @abstractmethod
     def __len__(self):
@@ -49,7 +54,7 @@ class FrameSource(ABC):
     def current_sec_into_video(self) -> float:
         return self.current_frame / self.fps
 
-    def stream_frames(self) -> Generator[Image.Image, None, None]:
+    def stream_frames(self) -> None:
         """
         Stream the video source into PIL images
         :param source: A string of either a file path, or a URL to download the video from
@@ -59,17 +64,18 @@ class FrameSource(ABC):
             raise VideoProcessingException(f"Video capture failed to open: {self._source}")
         try:
             log.debug(f"Opencv video capture opened for {self._source}")
-            while cap.isOpened():
+            while cap.isOpened() and self.running:
                 ret, cv2_img = cap.read()
                 if ret:
                     self.current_frame += 1
                     converted = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
                     pil_im = Image.fromarray(converted)
-                    yield pil_im
+                    self.img_output_queue.put(pil_im)
                 else:
                     break
         finally:
             cap.release()
+            self.img_output_queue.put(None)
 
 
 class YoutubeFrameSource(FrameSource):
@@ -91,7 +97,7 @@ class YoutubeFrameSource(FrameSource):
 
     @cache
     def __len__(self):
-        return self.yt_video.length
+        return self.yt_video.length * self.fps
 
     @cached_property
     def _source(self) -> str:

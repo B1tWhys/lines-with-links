@@ -1,13 +1,15 @@
-import dataclasses
-
 import pytube
 from video_processing.data_loading import YoutubeFrameSource, FrameSource
-from video_processing.tensorflow.frame_analyzer import frame_analysis_worker, Frame, FenExtractionResult
+from video_processing.tensorflow.frame_analyzer import Frame, FenExtractionResult
 import logging
 import typer
 from video_processing.db import init_sqlite_db, init_db, save_video, save_channel, save_position_sighting
 from queue import Queue, Empty
 from threading import Thread
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
+
+from video_processing.video_processing_task import VideoProcessingTask
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('video_processing')
@@ -71,31 +73,39 @@ def video(url: str,
     save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
     save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
 
-    frame_source_queue.put(frame_source)
-    frame_source_queue.put(None)
+    with logging_redirect_tqdm():
+        with tqdm(total=len(frame_source)) as bar:
+            bar.set_description(frame_source.video_id)
+            task = VideoProcessingTask(frame_source, lambda: bar.update(1))
+            worker_thread = Thread(target=task.run)
+            worker_thread.start()
 
-    frame_analyzer_thread, stream_thread, position_persistance_thread = initialize_threads()
-
-    try:
-        stream_thread.join()
-        log.info("Stream thread done")
-        frame_analyzer_thread.join()
-        log.info("Frame analyzer done")
-        extraction_result_queue.put(None)
-        position_persistance_thread.join()
-        log.info("Last positions persisted")
-    except KeyboardInterrupt:
-        log.info("KeyboardInterrupt received, cleaning up workers...")
-
-        clear_queue(frame_source_queue)
-        frame_source_queue.put(None)
-        log.debug("frame_source_queue cleared")
-
-        clear_queue(frames_queue)
-        frames_queue.put(None)
-        log.debug("frames_queue cleared")
-
-        stream_thread.join()
+            try:
+                worker_thread.join()
+            except KeyboardInterrupt:
+                log.info("Canceling worker task...")
+                task.stop()
+                worker_thread.join()
+    # try:
+    #     stream_thread.join()
+    #     log.info("Stream thread done")
+    #     frame_analyzer_thread.join()
+    #     log.info("Frame analyzer done")
+    #     extraction_result_queue.put(None)
+    #     position_persistance_thread.join()
+    #     log.info("Last positions persisted")
+    # except KeyboardInterrupt:
+    #     log.info("KeyboardInterrupt received, cleaning up workers...")
+    #
+    #     clear_queue(frame_source_queue)
+    #     frame_source_queue.put(None)
+    #     log.debug("frame_source_queue cleared")
+    #
+    #     clear_queue(frames_queue)
+    #     frames_queue.put(None)
+    #     log.debug("frames_queue cleared")
+    #
+    #     stream_thread.join()
 
 
 def initialize_threads():

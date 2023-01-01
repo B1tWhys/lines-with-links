@@ -1,5 +1,4 @@
 import os
-from queue import Queue
 from .helper_functions import predictSideFromFEN, unflipFEN, shortenFEN
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '1'  # Ignore Tensorflow INFO debug messages

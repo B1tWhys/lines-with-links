@@ -32,7 +32,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-main = "video_processing.main:app"
+extract-fen = "video_processing.main:app"
 
 [pytest]
 log_level = "INFO"

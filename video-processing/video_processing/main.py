@@ -1,11 +1,11 @@
 import dataclasses
 
 import pytube
-from PIL import Image
 from video_processing.data_loading import YoutubeFrameSource, FrameSource
+from video_processing.tensorflow.frame_analyzer import frame_analysis_worker, Frame, FenExtractionResult
 import logging
 import typer
-from video_processing.db import init_sqlite_db, init_db, save_video, save_channel
+from video_processing.db import init_sqlite_db, init_db, save_video, save_channel, save_position_sighting
 from queue import Queue, Empty
 from threading import Thread
 
@@ -18,17 +18,10 @@ app = typer.Typer()
 
 frame_source_queue = Queue()
 frames_queue = Queue(30)
-running = True
+extraction_result_queue = Queue()
 
 
-@dataclasses.dataclass
-class Frame:
-    vid_id: str
-    img: Image.Image
-    sec_into_video: float
-
-
-def empty_queue(q):
+def clear_queue(q):
     while True:
         try:
             q.get_nowait()
@@ -38,7 +31,7 @@ def empty_queue(q):
 
 def video_streaming_worker():
     log.info("Starting video streaming worker")
-    while running:
+    while True:
         frame_source: FrameSource = frame_source_queue.get()
         if frame_source is None:
             break
@@ -47,6 +40,15 @@ def video_streaming_worker():
             log.info(f"Frame received: {frame.sec_into_video:0.2f}")
             frames_queue.put(frame)
     log.info("Video streaming worker exiting...")
+
+def position_persistance_worker():
+    log.info("Starting persistance worker")
+    while True:
+        result: FenExtractionResult = extraction_result_queue.get()
+        if result is None:
+            break
+        log.debug(f"extracted result: {result}")
+        save_position_sighting(result.vid_id, result.fen, result.sec_into_video)
 
 
 @app.command()
@@ -70,22 +72,41 @@ def video(url: str,
     save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
 
     frame_source_queue.put(frame_source)
+    frame_source_queue.put(None)
 
-    stream_thread = Thread(target=video_streaming_worker)
+    frame_analyzer_thread, stream_thread, position_persistance_thread = initialize_threads()
+
     try:
-        stream_thread.start()
         stream_thread.join()
+        log.info("Stream thread done")
+        frame_analyzer_thread.join()
+        log.info("Frame analyzer done")
+        extraction_result_queue.put(None)
+        position_persistance_thread.join()
+        log.info("Last positions persisted")
     except KeyboardInterrupt:
         log.info("KeyboardInterrupt received, cleaning up workers...")
 
-        global running
-        running = False
-        empty_queue(frame_source_queue)
+        clear_queue(frame_source_queue)
         frame_source_queue.put(None)
         log.debug("frame_source_queue cleared")
-        empty_queue(frames_queue)
+
+        clear_queue(frames_queue)
+        frames_queue.put(None)
         log.debug("frames_queue cleared")
+
         stream_thread.join()
+
+
+def initialize_threads():
+    stream_thread = Thread(target=video_streaming_worker)
+    frame_analyzer_thread = Thread(target=frame_analysis_worker, args=[frames_queue, extraction_result_queue])
+    position_persistence_thread = Thread(target=position_persistance_worker)
+    stream_thread.start()
+    frame_analyzer_thread.start()
+    position_persistence_thread.start()
+    return frame_analyzer_thread, stream_thread, position_persistence_thread
+
 
 if __name__ == "__main__":
     app()

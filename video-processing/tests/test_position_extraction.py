@@ -1,11 +1,11 @@
-from video_processing.video_analysis import _extract_position
+from video_processing.tensorflow.frame_analyzer import extract_fen
 from pathlib import Path
 from PIL import Image
 
 def assert_test_image_contains_fen(img_name, expected_fen):
     img_path = Path(__file__).parent / 'test_images' / (img_name + '.png')
     img = Image.open(img_path)
-    assert _extract_position(img) == expected_fen
+    assert extract_fen(img) == expected_fen
 
 def test_position_extraction():
     assert_test_image_contains_fen('gothamchess_1', '2kr3r/ppp2pp1/5n1p/4n1N1/2Pqp1b1/3P2P1/P1PQ1PBP/1RB2RK1')

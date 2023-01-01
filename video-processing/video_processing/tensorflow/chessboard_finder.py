@@ -2,7 +2,6 @@ import numpy as np
 import PIL.Image
 import argparse
 from time import time
-from .helper_image_loading import *
 
 
 def nonmax_suppress_1d(arr, winsize=5):
@@ -332,79 +331,4 @@ def findGrayscaleTilesInImage(img):
 
   # Return both the tiles as well as chessboard corner locations in the image
   return tiles, corners
-
-# DEBUG
-# from matplotlib import pyplot as plt
-# def plotTiles(tiles):
-#   """Plot color or grayscale tiles as 8x8 subplots"""
-#   plt.figure(figsize=(6,6))
-#   files = "ABCDEFGH"
-#   for rank in range(8): # rows (numbers)
-#     for file in range(8): # columns (letters)
-#       plt.subplot(8,8,(7-rank)*8 + file + 1) # Plot rank reverse order to match image
-      
-#       if tiles.shape[2] == 64:
-#         # Grayscale
-#         tile = tiles[:,:,(rank*8+file)] # grayscale
-#         plt.imshow(tile, interpolation='None', cmap='gray', vmin = 0, vmax = 1)
-#       else:
-#         #Color
-#         tile = tiles[:,:,3*(rank*8+file):3*(rank*8+file+1)] # color
-#         plt.imshow(tile, interpolation='None',)
-      
-#       plt.axis('off')
-#       plt.title('%s %d' % (files[file], rank+1), fontsize=6)
-#   plt.show()
-
-def main(url):
-  print("Loading url %s..." % url)
-  color_img, url = loadImageFromURL(url)
-  
-  # Fail if can't load image
-  if color_img is None:
-    print('Couldn\'t load url: %s' % url)
-    return
-
-  if color_img.mode != 'RGB':
-    color_img = color_img.convert('RGB')
-  print("Processing...")
-  a = time()
-  img_arr = np.asarray(color_img.convert("L"), dtype=np.float32)
-  corners = findChessboardCorners(img_arr)
-  print("Took %.4fs" % (time()-a))
-  # corners = [x0, y0, x1, y1] where (x0,y0) 
-  # is top left and (x1,y1) is bot right
-
-  if corners is not None:
-    print("\tFound corners for %s: %s" % (url, corners))
-    link = getVisualizeLink(corners, url)
-    print(link)
-
-    # tiles = getChessTilesColor(np.array(color_img), corners)
-    # tiles = getChessTilesGray(img_arr, corners)
-    # plotTiles(tiles)
-
-    # plt.imshow(color_img, interpolation='none')
-    # plt.plot(corners[[0,0,2,2,0]]-0.5, corners[[1,3,3,1,1]]-0.5, color='red', linewidth=1)
-    # plt.show()
-  else:
-    print('\tNo corners found in image')
-
-if __name__ == '__main__':
-  np.set_printoptions(suppress=True, precision=2)
-  parser = argparse.ArgumentParser(description='Find orthorectified chessboard corners in image')
-  parser.add_argument('urls', default=['https://i.redd.it/1uw3h772r0fy.png'],
-    metavar='urls', type=str,  nargs='*', help='Input image urls')
-  # main('http://www.chessanytime.com/img/jeudirect/simplechess.png')
-  # main('https://i.imgur.com/JpzfV3y.jpg')
-  # main('https://i.imgur.com/jsCKzU9.jpg')
-  # main('https://i.imgur.com/49htmMA.png')
-  # main('https://i.imgur.com/HHdHGBX.png')
-  # main('http://imgur.com/By2xJkO')
-  # main('http://imgur.com/p8DJMly')
-  # main('https://i.imgur.com/Ns0iBrw.jpg')
-  # main('https://i.imgur.com/KLcCiuk.jpg')
-  args = parser.parse_args()
-  for url in args.urls:
-    main(url)
 

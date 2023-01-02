@@ -11,3 +11,4 @@ def test_position_extraction():
     assert_test_image_contains_fen('gothamchess_1', '2kr3r/ppp2pp1/5n1p/4n1N1/2Pqp1b1/3P2P1/P1PQ1PBP/1RB2RK1')
     assert_test_image_contains_fen('gothamchess_2', '8/1pq2ppk/r1p1nn1p/p1b1p3/P1N1P1BP/2P1B1P1/1P2QPK1/3R4')
     assert_test_image_contains_fen('naroditsky_1', 'r1bq1rk1/pp3ppp/2nb1n2/2p5/2B5/3P1N2/PP3PPP/RNBQ1RK1')
+    assert_test_image_contains_fen('agadmator_1', '2q1rb2/pR3pkr/3p2pN/2nPp1QP/1nB1P1b1/6N1/PBP3P1/5RK1')

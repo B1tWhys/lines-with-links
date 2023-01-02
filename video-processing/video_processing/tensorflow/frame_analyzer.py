@@ -50,7 +50,7 @@ class FenExtractionResult:
 
 
 def extract_fen(img: Image.Image) -> str | None:
-    # Look for chessboard in image, get corners and split chessboard into tiles
+    # Look for chessboard in image, get outer_corners and split chessboard into tiles
     tiles, _ = chessboard_finder.findGrayscaleTilesInImage(img)
 
     # Exit on failure to find chessboard in image

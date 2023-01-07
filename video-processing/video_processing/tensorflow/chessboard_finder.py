@@ -41,7 +41,7 @@ def find_inner_corners(img):
     return centers
 
 
-def inner_corners_to_cb_corners(centers):
+def inner_corners_to_cb_corners(centers, img_h, img_w):
     centers_df = pd.DataFrame(centers, columns=['x', 'y']).round().astype(np.int32)
     value_counts_x = centers_df.x.value_counts()
     value_counts_y = centers_df.y.value_counts()
@@ -56,10 +56,10 @@ def inner_corners_to_cb_corners(centers):
     inner_height = b_row - t_row
     square_width = inner_width / 6
     square_height = inner_height / 6
-    l_col -= square_width
-    r_col += square_width
-    t_row -= square_height
-    b_row += square_width
+    l_col = max(0, l_col-square_width)
+    r_col = min(img_w - 1, r_col + square_width)
+    t_row = max(0, t_row - square_height)
+    b_row = min(img_h - 1, b_row + square_width)
     return np.array([l_col, t_row], dtype=np.int32), np.array([r_col, b_row], dtype=np.int32)
 
 
@@ -67,7 +67,8 @@ def findChessboardCorners(img):
     inner_corners = find_inner_corners(img)
     if inner_corners.size < 25:
         return None
-    corners = inner_corners_to_cb_corners(inner_corners)
+    img_h, img_w = img.shape
+    corners = inner_corners_to_cb_corners(inner_corners, img_h, img_w)
     return np.concatenate(corners)
 
 

@@ -3,6 +3,7 @@ from functools import cache
 import numpy as np
 import PIL.Image
 import cv2 as cv
+import pandas as pd
 
 
 def show_img(img):
@@ -19,47 +20,55 @@ def gen_kernel(n):
     return template
 
 
-def findChessboardCorners(img):
+def center_of_contour(contour):
+    try:
+        M = cv.moments(contour)
+        cX = int(M["m10"] / M["m00"])
+        cY = int(M["m01"] / M["m00"])
+        return np.asarray([cX, cY], dtype=np.float32)
+    except ZeroDivisionError:
+        return np.mean(contour[:, 0, :], axis=0)
+
+
+def find_inner_corners(img):
     k_size = 12
     kernel = gen_kernel(k_size)
     match_result = cv.matchTemplate(img, kernel, cv.TM_CCOEFF_NORMED)
     _, match_result = cv.threshold(match_result, .85, 1, cv.THRESH_BINARY)
-    nonzero_point_y_coords, nonzero_point_x_coords = np.nonzero(match_result)
+    contours, hierarchy = cv.findContours(match_result.astype(np.uint8), cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
+    centers = np.array([center_of_contour(c) for c in contours])
+    centers += np.array([k_size // 2, k_size // 2])
+    return centers
 
-    if len(nonzero_point_x_coords) < 30 or len(nonzero_point_y_coords) < 30:
+
+def inner_corners_to_cb_corners(centers):
+    centers_df = pd.DataFrame(centers, columns=['x', 'y']).round().astype(np.int32)
+    value_counts_x = centers_df.x.value_counts()
+    value_counts_y = centers_df.y.value_counts()
+
+    columns = value_counts_x[value_counts_x > 2]
+    rows = value_counts_y[value_counts_y > 2]
+
+    l_col, r_col = columns.index.to_series().apply(['min', 'max'])
+    t_row, b_row = rows.index.to_series().apply(['min', 'max'])
+
+    inner_width = r_col - l_col
+    inner_height = b_row - t_row
+    square_width = inner_width / 6
+    square_height = inner_height / 6
+    l_col -= square_width
+    r_col += square_width
+    t_row -= square_height
+    b_row += square_width
+    return np.array([l_col, t_row], dtype=np.int32), np.array([r_col, b_row], dtype=np.int32)
+
+
+def findChessboardCorners(img):
+    inner_corners = find_inner_corners(img)
+    if inner_corners.size < 25:
         return None
-
-    show_img(match_result)
-    cv.imwrite('./match_result.png', match_result * 255)
-
-    # an offset is necessary to compensate for:
-    # * extra pixels get added to the sides of the image when doing the matching step
-    # * the coordinates returned are the top left of the kernel (not the center)
-    # * the kernel starts matching a pixel before it's completely centered over the pixel
-    #
-    # after experimenting, 3.5 * the kernel width seems to be about the right offset, although I
-    # am admittedly very confused about why that ends up being the right value
-    offset = k_size // 2
-
-    left_edge = nonzero_point_x_coords.min() + offset
-    right_edge = nonzero_point_x_coords.max() + offset
-    top_edge = nonzero_point_y_coords.min() + offset
-    bottom_edge = nonzero_point_y_coords.max() + offset
-
-    square_width = (bottom_edge - top_edge) // 6
-    square_height = (right_edge - left_edge) // 6
-
-    left_edge -= square_width
-    right_edge += square_width
-    top_edge -= square_height
-    bottom_edge += square_height
-
-    left_edge = max(0, left_edge)
-    right_edge = min(img.shape[1], right_edge)
-    top_edge = max(0, top_edge)
-    bottom_edge = min(img.shape[0], bottom_edge)
-
-    return np.array([left_edge, top_edge, right_edge, bottom_edge], dtype=np.int32)
+    corners = inner_corners_to_cb_corners(inner_corners)
+    return np.concatenate(corners)
 
 
 def getChessTilesColor(img, corners):

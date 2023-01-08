@@ -59,7 +59,7 @@ def test_position_extraction_performance():
 
     # original = 0.01471
     # c60a6dc  = 0.01094
-    # 8fd8504  =
+    # fcb8c7d  = 0.00865
     timeit_result = timeit.Timer(lambda: findGrayscaleTilesInImage(img)).timeit(1000)
     print(f"timeit result: {timeit_result / 1000}")
 

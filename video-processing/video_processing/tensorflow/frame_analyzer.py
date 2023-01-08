@@ -72,12 +72,13 @@ def process_tiles(tiles):
     """Run trained neural network on tiles generated from image"""
     if tiles is None or len(tiles) == 0:
         print("Couldn't parse chessboard")
-        return None, 0.0
+        return None
 
     # Reshape into Nx1024 rows of input data, format used by neural network
     validation_set = np.swapaxes(np.reshape(tiles, [32 * 32, 64]), 0, 1)
 
     # Run neural network on data
+    return None
     guess_prob, guessed = _tf_session.run(
         [probabilities, _prediction_layer],
         feed_dict={x: validation_set, _keep_prob_layer: 1.0})

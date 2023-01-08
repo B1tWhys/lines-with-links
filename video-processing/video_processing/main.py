@@ -25,7 +25,7 @@ def video_processing_task_wrapper(vid_url: str):
     log.info(f"Starting processing {vid.title}")
     save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
 
-    with tqdm(total=len(frame_source)) as bar:
+    with tqdm(total=len(frame_source), smoothing=.2) as bar:
         bar.set_description(frame_source.video_id)
         task = VideoProcessingTask(frame_source, lambda: bar.update(1))
         in_progress_tasks.add(task)

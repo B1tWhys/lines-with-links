@@ -37,6 +37,8 @@ def find_inner_corners(img):
     _, match_result = cv.threshold(match_result, .85, 1, cv.THRESH_BINARY)
     contours, hierarchy = cv.findContours(match_result.astype(np.uint8), cv.RETR_TREE, cv.CHAIN_APPROX_NONE)
     centers = np.array([center_of_contour(c) for c in contours])
+    if centers.size < 40:
+        return None
     centers += np.array([k_size // 2, k_size // 2])
     return centers
 
@@ -65,7 +67,7 @@ def inner_corners_to_cb_corners(centers, img_h, img_w):
 
 def findChessboardCorners(img):
     inner_corners = find_inner_corners(img)
-    if inner_corners.size < 25:
+    if inner_corners is None:
         return None
     img_h, img_w = img.shape
     corners = inner_corners_to_cb_corners(inner_corners, img_h, img_w)

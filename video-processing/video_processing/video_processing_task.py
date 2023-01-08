@@ -5,8 +5,16 @@ from video_processing.db import save_position_sighting
 from video_processing.tensorflow.frame_analyzer import extract_fen
 from typing import Callable
 import logging
+from pathlib import Path
 
 log = logging.getLogger(__name__)
+
+def handle_failed_video(failed_img, failed_frame_num, failed_ts, video_id, err):
+    bad_img_dir = Path("./errors")
+    bad_img_dir.mkdir(exist_ok=True)
+    bad_img_path = bad_img_dir / f"{video_id}_{failed_frame_num}.png"
+    failed_img.save(str(bad_img_path))
+    log.exception(f"Failed to process frame {failed_frame_num} ({failed_ts:0.3f}s) from video {video_id}. Failed frame persisted to: {str(bad_img_path)}")
 
 class VideoProcessingTask:
     frame_img_queue: Queue
@@ -43,7 +51,11 @@ class VideoProcessingTask:
             if self._frame_processed_callback is not None:
                 self._frame_processed_callback()
 
-            fen = extract_fen(frame)
+            try:
+                fen = extract_fen(frame)
+            except Exception as e:
+                handle_failed_video(frame, frame_num, frame_num / self.frame_source.fps, self.video_id, e)
+                fen = None
             fen_history = fen_history[1:] + [fen]
 
             if fen is None:

@@ -15,9 +15,9 @@
 	}
 </script>
 
-<div class="min-h-screen w-full bg-slate-800 flex">
+<div class="min-h-screen w-full bg-slate-800 flex overflow-hidden">
 	<nav class="mx-4 pt-2 h-full">
-		<ul>
+		<ul class="max-h-screen overflow-scroll">
 			{#each data.sightings as positionSighting}
 				<VideoListItem {positionSighting} />
 			{/each}

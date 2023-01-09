@@ -4,32 +4,9 @@ from video_processing.db import init_sqlite_db
 from video_processing.tensorflow.frame_analyzer import extract_fen
 from pathlib import Path
 from PIL import Image
-from video_processing.data_loading import FrameSource
+from video_processing.data_loading import FileFrameSource
 from video_processing.video_processing_task import VideoProcessingTask
-from video_processing.tensorflow.chessboard_finder import findGrayscaleTilesInImage
-
-
-class FileFrameSource(FrameSource):
-    file_path: str
-
-    def __init__(self, file_path: str):
-        super().__init__()
-        self.file_path = file_path
-
-    def __len__(self):
-        return 1000
-
-    @property
-    def _source(self) -> str:
-        return self.file_path
-
-    @property
-    def fps(self) -> float:
-        return 30
-
-    @property
-    def video_id(self) -> str:
-        return "testvideo"
+from video_processing.tensorflow.chessboard_finder import find_grayscale_tiles_in_image
 
 
 def test_performance():
@@ -60,7 +37,7 @@ def test_position_extraction_performance():
     # original = 0.01471
     # c60a6dc  = 0.01094
     # fcb8c7d  = 0.00865
-    timeit_result = timeit.Timer(lambda: findGrayscaleTilesInImage(img)).timeit(1000)
+    timeit_result = timeit.Timer(lambda: find_grayscale_tiles_in_image(img)).timeit(1000)
     print(f"timeit result: {timeit_result / 1000}")
 
 

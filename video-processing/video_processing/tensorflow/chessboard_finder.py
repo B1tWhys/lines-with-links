@@ -161,7 +161,7 @@ def getTiles(processed_gray_img):
     return tiles
 
 
-def findGrayscaleTilesInImage(img):
+def find_grayscale_tiles_in_image(img):
     """ Find chessboard and convert into input tiles for CNN """
     if img is None:
         return None, None

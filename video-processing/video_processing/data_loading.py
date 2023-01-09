@@ -6,6 +6,7 @@ import logging
 from pytube import YouTube, Stream
 from functools import cached_property, cache
 from queue import Queue
+from multiprocessing import current_process
 
 log = logging.getLogger(__name__)
 
@@ -59,12 +60,17 @@ class FrameSource(ABC):
         Stream the video source into PIL images
         :param source: A string of either a file path, or a URL to download the video from
         """
-        cap = cv2.VideoCapture(self._source)
-        if not cap.isOpened():
-            raise VideoProcessingException(f"Video capture failed to open: {self._source}")
         try:
+            cap = cv2.VideoCapture(self._source)
+            # print(f"hello from frame source in pid {current_process().pid}")
+            if not cap.isOpened():
+                exception = VideoProcessingException(f"Video capture failed to open: {self._source}")
+                self.img_output_queue.put(exception)
+                return
+
             log.debug(f"Opencv video capture opened for {self._source}")
             while cap.isOpened() and self.running:
+                # print(f"frame source is working in pid {current_process().pid}")
                 ret, cv2_img = cap.read()
                 if ret:
                     self.current_frame += 1
@@ -74,12 +80,11 @@ class FrameSource(ABC):
                 else:
                     break
         finally:
-            cap.release()
+            # cap.release()
             self.img_output_queue.put(None)
 
 
 class YoutubeFrameSource(FrameSource):
-
     yt_video: YouTube
     _stream: Stream
 
@@ -110,3 +115,30 @@ class YoutubeFrameSource(FrameSource):
     @cached_property
     def video_id(self) -> str:
         return self.yt_video.video_id
+
+
+class FileFrameSource(FrameSource):
+    """
+    Only used in tests
+    """
+    file_path: str
+
+    def __init__(self, file_path: str):
+        super().__init__()
+        self.file_path = file_path
+
+    def __len__(self) -> int:
+        cap = cv2.VideoCapture(self._source)
+        return int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    @property
+    def _source(self) -> str:
+        return self.file_path
+
+    @property
+    def fps(self):
+        return 30
+
+    @property
+    def video_id(self) -> str:
+        return "testvideo"

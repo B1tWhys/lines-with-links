@@ -1,12 +1,12 @@
 import pytube
-from video_processing.data_loading import YoutubeFrameSource
+from video_processing.data_loading import YoutubeFrameSource, FileFrameSource
 import logging
 import typer
-from video_processing.db import init_sqlite_db, init_db, save_video, save_channel
-from threading import Thread
+from video_processing.db import init_sqlite_db, init_db, save_video, save_channel, all_processed_video_ids
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from multiprocessing.pool import ThreadPool as Pool
+import multiprocessing as mp
 
 from video_processing.video_processing_task import VideoProcessingTask
 
@@ -20,13 +20,15 @@ in_progress_tasks = set()
 
 
 def video_processing_task_wrapper(vid_url: str):
+    # frame_source = FileFrameSource("/tmp/test_video.mp4")
     frame_source = YoutubeFrameSource(vid_url)
     vid = frame_source.yt_video
     log.info(f"Starting processing {vid.title}")
     save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
 
     with tqdm(total=len(frame_source), smoothing=.2) as bar:
-        bar.set_description(frame_source.video_id)
+        # bar.set_description(frame_source.video_id)
+        bar.set_description(vid_url)
         task = VideoProcessingTask(frame_source, lambda: bar.update(1))
         in_progress_tasks.add(task)
         task.run()
@@ -54,18 +56,9 @@ def video(url: str,
     save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
 
     with logging_redirect_tqdm():
-        with tqdm(total=len(frame_source)) as bar:
-            bar.set_description(frame_source.video_id)
+        with tqdm(total=len(frame_source), smoothing=.1) as bar:
             task = VideoProcessingTask(frame_source, lambda: bar.update(1))
-            worker_thread = Thread(target=task.run)
-            worker_thread.start()
-
-            try:
-                worker_thread.join()
-            except KeyboardInterrupt:
-                log.info("Canceling worker task...")
-                task.stop()
-                worker_thread.join()
+            task.run()
 
 
 @app.command()
@@ -84,8 +77,12 @@ def channel(url: str,
 
     channel = pytube.Channel(url)
     save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
+    log.info(f"Loading previously processed video ids")
+    excl_vid_ids = set(all_processed_video_ids())
+    # video_urls = list(channel.video_urls)
     log.info(f"Loading video list for {channel.channel_name}...")
-    video_urls = list(channel.video_urls)
+    video_urls = [v.watch_url for v in channel.videos if v.video_id not in excl_vid_ids]
+
     with logging_redirect_tqdm():
         with tqdm(total=len(video_urls), smoothing=0) as channel_bar:
             channel_bar.set_description(channel.channel_name)
@@ -105,4 +102,6 @@ def channel(url: str,
 
 
 if __name__ == "__main__":
+    # forkserver must be used because processes will be forked from other threads
+    mp.set_start_method('forkserver')
     app()

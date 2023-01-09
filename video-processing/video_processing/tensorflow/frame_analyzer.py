@@ -51,7 +51,7 @@ class FenExtractionResult:
 
 def extract_fen(img: Image.Image) -> str | None:
     # Look for chessboard in image, get outer_corners and split chessboard into tiles
-    tiles, _ = chessboard_finder.findGrayscaleTilesInImage(img)
+    tiles, _ = chessboard_finder.find_grayscale_tiles_in_image(img)
 
     # Exit on failure to find chessboard in image
     if tiles is None:
@@ -59,26 +59,15 @@ def extract_fen(img: Image.Image) -> str | None:
 
     # Make prediction on input tiles. Resulting fen *may* be flipped along y-axis
     fen = process_tiles(tiles)
-
-    if fen is None:
-        return None
-    side = predictSideFromFEN(fen)
-    if side == 'b':
-        fen = unflipFEN(fen)
-    return shortenFEN(fen)
+    return fen
 
 
 def process_tiles(tiles):
     """Run trained neural network on tiles generated from image"""
-    if tiles is None or len(tiles) == 0:
-        print("Couldn't parse chessboard")
-        return None
-
     # Reshape into Nx1024 rows of input data, format used by neural network
     validation_set = np.swapaxes(np.reshape(tiles, [32 * 32, 64]), 0, 1)
 
     # Run neural network on data
-    return None
     guess_prob, guessed = _tf_session.run(
         [probabilities, _prediction_layer],
         feed_dict={x: validation_set, _keep_prob_layer: 1.0})
@@ -88,4 +77,7 @@ def process_tiles(tiles):
     label_index_2_name = lambda label_index: ' KQRBNPkqrbnp'[label_index]
     piece_names = list(map(lambda k: '1' if k == 0 else label_index_2_name(k), guessed))  # exchange ' ' for '1' for FEN
     fen = '/'.join([''.join(piece_names[i * 8:(i + 1) * 8]) for i in reversed(range(8))])
-    return fen
+    side = predictSideFromFEN(fen)
+    if side == 'b':
+        fen = unflipFEN(fen)
+    return shortenFEN(fen)

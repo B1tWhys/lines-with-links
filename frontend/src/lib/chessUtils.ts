@@ -1,4 +1,3 @@
-import type { Api } from 'chessground/api';
 import type { Color, Key } from 'chessground/types';
 import { type ChessInstance, SQUARES, type Chess } from 'chess.js';
 

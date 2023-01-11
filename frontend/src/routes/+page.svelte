@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
-	import Chessboard from '$lib/chessboard.svelte';
-	import VideoListItem from '$lib/videoListItem.svelte';
+	import { goto } from '$app/navigation';
+	import Chessboard from '$lib/ui/chessboard.svelte';
+	import VideoListItem from '$lib/ui/videoListItem.svelte';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 
@@ -17,9 +17,9 @@
 
 <div class="min-h-screen w-full bg-slate-800 flex overflow-hidden">
 	<nav class="mx-4 pt-2 h-full">
-		<ul class="max-h-screen overflow-scroll">
-			{#each data.sightings as positionSighting}
-				<VideoListItem {positionSighting} />
+		<ul class="max-h-screen max-w-lg overflow-scroll">
+			{#each data.sightings as videoPositions}
+				<VideoListItem {videoPositions} />
 			{/each}
 		</ul>
 	</nav>

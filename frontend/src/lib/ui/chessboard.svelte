@@ -4,7 +4,7 @@
 	import 'chessground/assets/chessground.base.css';
 	import 'chessground/assets/chessground.brown.css';
 	import 'chessground/assets/chessground.cburnett.css';
-	import '$lib/chessboard.css';
+	import '$lib/ui/chessboard.css';
 	import { onMount } from 'svelte';
 	import type { Api } from 'chessground/api';
 	import { Chess, type Square } from 'chess.js';

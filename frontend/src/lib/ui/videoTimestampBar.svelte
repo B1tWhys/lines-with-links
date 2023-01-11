@@ -30,8 +30,8 @@
 	let pctsIntoVideo = positionSightings.map((ps) => {
 		return Math.random();
 	});
-	pctsIntoVideo[0] = 0;
 	pctsIntoVideo[pctsIntoVideo.length - 1] = 1;
+	pctsIntoVideo[0] = 0;
 
 	$: pxOffsets = pctsIntoVideo.map((pct) => (barWidth - 10) * pct);
 

@@ -12,7 +12,7 @@
 
 <li class="my-2 border border-zinc-900 bg-gray-900 rounded-md px-3 pt-3">
 		<div class="flex flex-row">
-			<a href={url.toString()} class="mr-2">
+			<a href={url.toString()} class="mr-2 flex-shrink-0">
 				<img class="h-[94px] w-[168px] object-cover rounded-md"
 					src={videoPositions.thumbnailUrl}
 					alt="{videoPositions.videoTitle} - {videoPositions.channelName}"

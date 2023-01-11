@@ -8,15 +8,18 @@
 	import { onMount } from 'svelte';
 	import type { Api } from 'chessground/api';
 	import { Chess, type Square } from 'chess.js';
-	import { toColor, toDests } from '$lib/chessUtils';
+	import { toColor, toDests } from '$lib/utils';
 	import type { Key, SquareNode } from 'chessground/types';
+	import { start } from 'chessground/drag';
 
 	export let onPositionChange: (newFen: string) => void;
+	export let startingPosition: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 	const chess = new Chess();
 	let cg: Api;
 	let board: HTMLElement;
 	let config: Config = {
+		fen: startingPosition,
 		movable: {
 			color: toColor(chess),
 			free: false,
@@ -42,7 +45,7 @@
 				color: toColor(chess),
 				dests: toDests(chess)
 			}
-		})
+		});
 		onPositionChange(chess.fen());
 	}
 </script>

@@ -7,6 +7,9 @@
 
 	export let data: PageData;
 
+	let startingPosition =
+		$page.url.searchParams.get('fen') || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+
 	async function onNewFen(fen: string) {
 		console.log(`loading new fen: ${fen}`);
 		const url = $page.url;
@@ -15,16 +18,14 @@
 	}
 </script>
 
-<div class="min-h-screen w-full bg-slate-800 flex overflow-hidden">
-	<nav class="mx-4 pt-2 h-full">
-		<ul class="max-h-screen max-w-lg overflow-scroll">
-			{#each data.sightings as videoPositions}
-				<VideoListItem {videoPositions} />
-			{/each}
-		</ul>
-	</nav>
+<div class="h-screen w-full bg-slate-800 flex px-3">
+	<ul class="max-w-md overflow-scroll pr-4 pt-1">
+		{#each data.sightings as videoPositions (videoPositions.videoId)}
+			<VideoListItem {videoPositions} />
+		{/each}
+	</ul>
 
-	<div class="max-h-screen flex w-full justify-center">
-		<Chessboard onPositionChange={onNewFen} />
+	<div class="flex w-full justify-center">
+		<Chessboard onPositionChange={onNewFen} {startingPosition}/>
 	</div>
 </div>

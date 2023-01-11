@@ -3,7 +3,6 @@
 	import VideoTimestampBar from './videoTimestampBar.svelte';
 
 	export let videoPositions: VideoPositions;
-	let expanded = true;
 
 	let url = new URL('https://www.youtube.com/watch');
 	url.searchParams.append('v', videoPositions.videoId);
@@ -12,16 +11,15 @@
 </script>
 
 <li class="my-2 border border-zinc-900 bg-gray-900 rounded-md px-3 pt-3">
-	<!-- svelte-ignore a11y-click-events-have-key-events -->
-	<div on:click={() => (expanded = true)}>
 		<div class="flex flex-row">
-			<img
-				class="mr-2 h-24 object-scale-down rounded-md"
-				src={videoPositions.thumbnailUrl}
-				alt="{videoPositions.videoTitle} - {videoPositions.channelName}"
-			/>
-			<div>
-				<div class="text-white font-bold mb-1">{videoPositions.videoTitle}</div>
+			<a href={url.toString()} class="mr-2">
+				<img class="h-[94px] w-[168px] object-cover rounded-md"
+					src={videoPositions.thumbnailUrl}
+					alt="{videoPositions.videoTitle} - {videoPositions.channelName}"
+				/>
+			</a>
+			<div class="flex-shrink">
+				<a class="text-white font-bold mb-1" href={url.toString()}>{videoPositions.videoTitle}</a>
 				<div class="text-slate-300 text-sm">
 					<a href={videoPositions.channelUrl} target="_blank" rel="noreferrer">
 						{videoPositions.channelName}
@@ -29,12 +27,9 @@
 				</div>
 			</div>
 		</div>
-		{#if expanded}
-			<VideoTimestampBar
-				positionSightings={videoPositions.positionSightings}
-				videoLengthSec={videoLength}
-				videoBaseUrl={url}
-			/>
-		{/if}
-	</div>
+		<VideoTimestampBar
+			positionSightings={videoPositions.positionSightings}
+			videoLengthSec={videoLength}
+			videoBaseUrl={url}
+		/>
 </li>

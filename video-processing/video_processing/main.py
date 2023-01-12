@@ -1,5 +1,5 @@
 import pytube
-from video_processing.data_loading import YoutubeFrameSource, FileFrameSource
+from video_processing.data_loading import YoutubeFrameSource
 import logging
 import typer
 from video_processing.db import init_sqlite_db, init_db, save_video, save_channel, all_processed_video_ids
@@ -8,7 +8,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from multiprocessing.pool import ThreadPool as Pool
 import multiprocessing as mp
 
-from video_processing.video_processing_task import VideoProcessingTask
+from video_processing.video_processing_task import VideoProcessingTask, handle_failed_video
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('video_processing')
@@ -21,18 +21,20 @@ in_progress_tasks = set()
 
 def video_processing_task_wrapper(vid_url: str):
     # frame_source = FileFrameSource("/tmp/test_video.mp4")
-    frame_source = YoutubeFrameSource(vid_url)
-    vid = frame_source.yt_video
-    log.info(f"Starting processing {vid.title}")
-    save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
+    try:
+        frame_source = YoutubeFrameSource(vid_url)
+        vid = frame_source.yt_video
+        log.info(f"Starting processing {vid.title}")
+        save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
 
-    with tqdm(total=len(frame_source), smoothing=.2) as bar:
-        # bar.set_description(frame_source.video_id)
-        bar.set_description(vid_url)
-        task = VideoProcessingTask(frame_source, lambda: bar.update(1))
-        in_progress_tasks.add(task)
-        task.run()
-        in_progress_tasks.remove(task)
+        with tqdm(total=len(frame_source), smoothing=.2) as bar:
+            bar.set_description(vid_url)
+            task = VideoProcessingTask(frame_source, lambda: bar.update(1))
+            in_progress_tasks.add(task)
+            task.run()
+            in_progress_tasks.remove(task)
+    except Exception as e:
+        log.exception(f"Failed to process video {vid_url}")
 
 
 @app.command()

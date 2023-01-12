@@ -3,7 +3,6 @@
 	import { toTimestampStr } from '$lib/utils';
 
 	export let positionSightings: [PositionSightingMetadata];
-	export let videoLengthSec: number;
 	export let videoBaseUrl: URL;
 
 	const barBubbleClasses = [
@@ -26,13 +25,8 @@
 		return url.toString();
 	});
 
-	// FIXME when i've added the video length to the DB
-	let pctsIntoVideo = positionSightings.map((ps) => {
-		return Math.random();
-	});
-	pctsIntoVideo[pctsIntoVideo.length - 1] = 1;
-	pctsIntoVideo[0] = 0;
-
+	// FIXME remove * 30 once the video length in the DB is fixed...
+	let pctsIntoVideo = positionSightings.map((ps) => ps.secIntoVideo / (ps.videoLength * 30));
 	$: pxOffsets = pctsIntoVideo.map((pct) => (barWidth - 10) * pct);
 
 	let timestamps = positionSightings.map((ps) => toTimestampStr(ps.secIntoVideo));

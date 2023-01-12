@@ -16,6 +16,7 @@ export async function getSightingsOfPosition(
 	const result = await db
 		.select(
 			'v.id as videoId',
+			'v.length as videoLength',
 			'v.title as videoTitle',
 			'v.thumbnail_url as thumbnailUrl',
 			'c.channel_name as channelName',
@@ -28,7 +29,7 @@ export async function getSightingsOfPosition(
 		.leftJoin('channels as c', 'v.channel_id', 'c.id')
 		.where('p.fen', '=', fen)
 		.orderBy('v.id', 'ps.sec_into_video')
-		.limit(100);
+		.limit(50);
 	console.info(`Fetched ${result.length} results from db for fen ${fen}`);
 	return result;
 }
@@ -45,6 +46,7 @@ export async function getVideosMatching(fen: string): Promise<Array<VideoPositio
 		} else {
 			const vidPositions: VideoPositions = {
 				videoId: vidId,
+				videoLength: posSighting.videoLength,
 				videoTitle: posSighting.videoTitle,
 				thumbnailUrl: posSighting.thumbnailUrl,
 				channelName: posSighting.channelName,

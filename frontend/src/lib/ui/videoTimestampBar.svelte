@@ -25,8 +25,7 @@
 		return url.toString();
 	});
 
-	// FIXME remove * 30 once the video length in the DB is fixed...
-	let pctsIntoVideo = positionSightings.map((ps) => ps.secIntoVideo / (ps.videoLength * 30));
+	let pctsIntoVideo = positionSightings.map((ps) => ps.secIntoVideo / ps.videoLength);
 	$: pxOffsets = pctsIntoVideo.map((pct) => (barWidth - 10) * pct);
 
 	let timestamps = positionSightings.map((ps) => toTimestampStr(ps.secIntoVideo));

@@ -6,8 +6,6 @@
 
 	let url = new URL('https://www.youtube.com/watch');
 	url.searchParams.append('v', videoPositions.videoId);
-	// FIXME: get the real value from the DB (once i put it there)
-	let videoLength = Math.max(...videoPositions.positionSightings.map((ps) => ps.secIntoVideo));
 </script>
 
 <li class="my-2 border border-zinc-900 bg-gray-900 rounded-md px-3 pt-3">

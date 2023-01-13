@@ -35,9 +35,10 @@
 
 <div class="w-full pb-4 pt-6">
 	<div class="h-1 bg-blue-300 rounded-full" bind:clientWidth={barWidth}>
-		{#each urls as url, i}
+		{#each positionSightings as sighting, i (sighting.videoId + sighting.secIntoVideo)}
 			{@const pxOffset = pxOffsets[i]}
 			{@const showTimestamp = isHovered[i]}
+			{@const url = urls[i]}
 			<!-- svelte-ignore a11y-mouse-events-have-key-events -->
 			<a
 				class={barBubbleClasses}

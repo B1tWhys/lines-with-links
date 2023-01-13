@@ -10,16 +10,13 @@
 	import { Chess, type Square } from 'chess.js';
 	import { toColor, toDests } from '$lib/utils';
 	import type { Key, SquareNode } from 'chessground/types';
-	import { start } from 'chessground/drag';
-
-	export let onPositionChange: (newFen: string) => void;
-	export let startingPosition: string = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+	import { fen } from '$lib/stores';
 
 	const chess = new Chess();
 	let cg: Api;
 	let board: HTMLElement;
 	let config: Config = {
-		fen: startingPosition,
+		fen: $fen,
 		movable: {
 			color: toColor(chess),
 			free: false,
@@ -46,7 +43,7 @@
 				dests: toDests(chess)
 			}
 		});
-		onPositionChange(chess.fen());
+		fen.set(chess.fen());
 	}
 </script>
 

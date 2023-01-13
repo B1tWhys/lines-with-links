@@ -27,7 +27,7 @@
 		{#await videosPromise}
 		 <div class="text-slate-100 text-lg w-full h-full flex justify-center items-center">loading...</div>
 		{:then videos}
-			<ul class="overflow-scroll pr-4 pt-1">
+			<ul class="overflow-scroll pr-4 pt-1 max-h-screen">
 				{#each videos as positions (positions.videoId)}
 					<VideoListItem videoPositions={positions} />
 				{/each}

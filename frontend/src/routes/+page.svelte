@@ -22,8 +22,10 @@
 	});
 </script>
 
-<div class="bg-slate-800 h-screen flex flex-col items-center gap-2">
-	<div class="aspect-square max-w-lg w-full rounded-none min-[512px]:rounded-md overflow-clip">
+<div class="bg-slate-800 h-screen flex flex-col items-center gap-2 xl:flex-row-reverse">
+	<div
+		class="aspect-square max-w-lg w-full rounded-none min-[512px]:rounded-md overflow-clip xl:max-w-full xl:max-h-screen xl:w-auto xl:h-screen"
+	>
 		<Chessboard />
 	</div>
 	{#await videosPromise}
@@ -31,7 +33,7 @@
 			loading...
 		</div>
 	{:then videos}
-		<ul class="overflow-y-scroll overflow-x-hidden px-3">
+		<ul class="overflow-y-scroll overflow-x-hidden px-3 max-h-screen">
 			{#each videos as positions (positions.videoId)}
 				<VideoListItem videoPositions={positions} />
 			{/each}

@@ -22,20 +22,19 @@
 	});
 </script>
 
-<div class="h-screen w-full bg-slate-800 flex px-3">
-	<div class="w-1/3">
-		{#await videosPromise}
-		 <div class="text-slate-100 text-lg w-full h-full flex justify-center items-center">loading...</div>
-		{:then videos}
-			<ul class="overflow-scroll pr-4 pt-1 max-h-screen">
-				{#each videos as positions (positions.videoId)}
-					<VideoListItem videoPositions={positions} />
-				{/each}
-			</ul>
-		{/await}
-	</div>
-
-	<div class="flex w-full justify-center">
+<div class="bg-slate-800 h-screen flex flex-col">
+	<div class="flex-shrink-0">
 		<Chessboard />
 	</div>
+	{#await videosPromise}
+		<div class="text-slate-100 text-lg w-full h-full flex justify-center items-center">
+			loading...
+		</div>
+	{:then videos}
+		<ul class="overflow-y-scroll overflow-x-hidden p-3">
+			{#each videos as positions (positions.videoId)}
+				<VideoListItem videoPositions={positions} />
+			{/each}
+		</ul>
+	{/await}
 </div>

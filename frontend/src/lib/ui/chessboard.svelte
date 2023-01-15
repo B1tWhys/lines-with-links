@@ -88,4 +88,4 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div bind:this={board} class="aspect-square" />
+<div bind:this={board} class="aspect-square " />

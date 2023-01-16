@@ -1,38 +1,39 @@
 import pytube
-
-from video_processing.position_extraction import process_video
-from video_processing.db import *
+from video_processing.data_loading import YoutubeFrameSource
 import logging
 import typer
-from tqdm.contrib.logging import logging_redirect_tqdm
+from video_processing.db import init_sqlite_db, init_db, save_video, save_channel, all_processed_video_ids
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from multiprocessing.pool import ThreadPool as Pool
-from pdb import set_trace
+import multiprocessing as mp
+
+from video_processing.video_processing_task import VideoProcessingTask, handle_failed_video
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('video_processing')
 log = logging.getLogger('video_processing')
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 app = typer.Typer()
+in_progress_tasks = set()
 
 
-def process_vid(url):
-    vid = pytube.YouTube(url)
-    save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
-    log.info(f"Processing video: {vid.title}")
-    with tqdm(total=vid.length, smoothing=0) as bar:
-        try:
-            bar.set_description(vid.video_id)
-            for fen, timestamp in process_video(vid):
-                log.debug(f"saving position {fen} : {timestamp:0.3f}")
-                save_position_sighting(vid.video_id, fen, round(timestamp, 2))
-                bar.update(timestamp - bar.n)
-        except Exception as e:
-            log.warning(f"Failed to process video: {vid.video_id}", e)
-            with open('./failed_videos.txt', 'a') as f:
-                f.write(vid.video_id + '\n')
-    return None
+def video_processing_task_wrapper(vid_url: str):
+    try:
+        frame_source = YoutubeFrameSource(vid_url)
+        vid = frame_source.yt_video
+        log.info(f"Starting processing {vid.title}")
+        save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url, vid.views, vid.length)
+
+        with tqdm(total=len(frame_source), smoothing=.2) as bar:
+            bar.set_description(vid_url)
+            task = VideoProcessingTask(frame_source, lambda: bar.update(1))
+            in_progress_tasks.add(task)
+            task.run()
+            in_progress_tasks.remove(task)
+    except Exception as e:
+        log.exception(f"Failed to process video {vid_url}")
 
 
 @app.command()
@@ -48,44 +49,60 @@ def video(url: str,
     else:
         init_db(db_hostname, db_port, db_username, db_password, db_name)
 
-    vid = pytube.YouTube(url)
-    pt_channel = pytube.Channel(vid.channel_url)
-    save_channel(pt_channel.channel_id, pt_channel.channel_name, pt_channel.channel_url)
+    frame_source = YoutubeFrameSource(url)
+    vid = frame_source.yt_video
+    log.info(f"Processing video: {vid.title}")
+    channel = pytube.Channel(vid.channel_url)
+    save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
+    save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url, vid.views, vid.length)
 
     with logging_redirect_tqdm():
-        process_vid(vid)
+        with tqdm(total=len(frame_source), smoothing=.1) as bar:
+            task = VideoProcessingTask(frame_source, lambda: bar.update(1))
+            task.run()
 
 
 @app.command()
 def channel(url: str,
+            threads: int,
             db_hostname: str = typer.Option("localhost", envvar="DB_HOSTNAME"),
             db_username: str = typer.Option("postgres", envvar="DB_USERNAME"),
             db_password: str = typer.Option(..., prompt=True, hide_input=True, envvar="DB_PASSWORD"),
             db_port: int = typer.Option(default=5432, envvar="DB_PORT"),
             db_name: str = typer.Option("postgres", envvar="DB_NAME"),
-            sqlite_db: bool = typer.Option(False),
-            threads: int = 5):
+            sqlite_db: bool = typer.Option(False)):
     if sqlite_db:
         init_sqlite_db()
     else:
         init_db(db_hostname, db_port, db_username, db_password, db_name)
 
-    pt_channel = pytube.Channel(url)
-    log.info(f"Processing videos on channel: {pt_channel.channel_name}")
-    save_channel(pt_channel.channel_id, pt_channel.channel_name, pt_channel.channel_url)
-
-    log.debug(f"Fetching list of videos...")
-    all_vids = pt_channel.videos
-    log.debug("Filtering them...")
-    already_processed = set(all_processed_video_ids())
-    vid_urls = [v.watch_url for v in all_vids if v.video_id not in already_processed]
+    channel = pytube.Channel(url)
+    save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
+    log.info(f"Loading previously processed video ids")
+    excl_vid_ids = set(all_processed_video_ids())
+    # video_urls = list(channel.video_urls)
+    log.info(f"Loading video list for {channel.channel_name}...")
+    video_urls = [v.watch_url for v in channel.videos if v.video_id not in excl_vid_ids]
 
     with logging_redirect_tqdm():
-        with Pool(threads) as p:
-            # for v in tqdm(vids):
-            #     process_vid(v)
-            list(tqdm(p.imap(process_vid, vid_urls), total=pt_channel.length))
+        with tqdm(total=len(video_urls), smoothing=0) as channel_bar:
+            channel_bar.set_description(channel.channel_name)
+            with Pool(threads) as pool:
+                video_processing_task_completions = pool.imap(video_processing_task_wrapper, video_urls)
+                try:
+                    log.info("All tasks have been queued...")
+                    for _ in video_processing_task_completions:
+                        channel_bar.update(1)
+                except KeyboardInterrupt:
+                    log.info("Closing pool and stopping in-progress tasks")
+                    pool.terminate()
+                    for task in in_progress_tasks:
+                        task.stop()
+                    log.info("Waiting for remaining tasks to exit")
+                    pool.join()
 
 
 if __name__ == "__main__":
+    # forkserver must be used because processes will be forked from other threads
+    mp.set_start_method('forkserver')
     app()

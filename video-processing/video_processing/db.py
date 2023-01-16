@@ -29,6 +29,8 @@ class Video(Base):
     channel_id = Column(ForeignKey("channels.id"))
     title = Column(String, nullable=False)
     thumbnail_url = Column(String)
+    views = Column(Integer)
+    length = Column(Float)
 
     channel = relationship("Channel", back_populates="videos")
     positions = relationship("Position", secondary="position_sightings", back_populates="videos", viewonly=True)
@@ -96,11 +98,11 @@ def save_channel(id: str, channel_name: str, channel_url: str):
             session.commit()
 
 
-def save_video(video_id: str, channel_id: str, title: str, thumbnail_url: str):
+def save_video(video_id: str, channel_id: str, title: str, thumbnail_url: str, views: int, length: float):
     with Session(_engine) as session:
         if session.get(Video, video_id) is None:
             channel: Channel = session.get(Channel, channel_id)
-            video = Video(id=video_id, title=title, thumbnail_url=thumbnail_url)
+            video = Video(id=video_id, title=title, thumbnail_url=thumbnail_url, views=views, length=length)
             channel.videos.append(video)
             session.commit()
 

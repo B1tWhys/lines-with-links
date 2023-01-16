@@ -15,7 +15,7 @@ class TestPersistence:
             extracted_data.append((test_fen1, float(i)))
         for i in range(4):
             extracted_data.append((test_fen2, float(i)))
-        mocker.patch("video_processing.position_extraction.process_video", return_value=extracted_data)
+        mocker.patch("video_processing.tensorflow.frame_analyzer.extract_fen", return_value=extracted_data)
 
         from video_processing import main
 
@@ -39,6 +39,9 @@ class TestPersistence:
 
             saved_position = session.execute(select(Position).where(Position.fen == test_fen1)).scalars().one()
             assert len(saved_position.sightings) == 4
+
+            assert saved_video.views > 0
+            assert saved_video.length > 0
 
             assert all_processed_video_ids() == ['TsR154sQMVo']
 

@@ -20,12 +20,11 @@ in_progress_tasks = set()
 
 
 def video_processing_task_wrapper(vid_url: str):
-    # frame_source = FileFrameSource("/tmp/test_video.mp4")
     try:
         frame_source = YoutubeFrameSource(vid_url)
         vid = frame_source.yt_video
         log.info(f"Starting processing {vid.title}")
-        save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
+        save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url, vid.views, vid.length)
 
         with tqdm(total=len(frame_source), smoothing=.2) as bar:
             bar.set_description(vid_url)
@@ -55,7 +54,7 @@ def video(url: str,
     log.info(f"Processing video: {vid.title}")
     channel = pytube.Channel(vid.channel_url)
     save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
-    save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url)
+    save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url, vid.views, vid.length)
 
     with logging_redirect_tqdm():
         with tqdm(total=len(frame_source), smoothing=.1) as bar:

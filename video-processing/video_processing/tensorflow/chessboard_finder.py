@@ -1,8 +1,8 @@
 from functools import cache
 
-import numpy as np
 import PIL.Image
 import cv2 as cv
+import numpy as np
 import pandas as pd
 
 
@@ -58,7 +58,7 @@ def inner_corners_to_cb_corners(centers, img_h, img_w):
     inner_height = b_row - t_row
     square_width = inner_width / 6
     square_height = inner_height / 6
-    l_col = max(0, l_col-square_width)
+    l_col = max(0, l_col - square_width)
     r_col = min(img_w - 1, r_col + square_width)
     t_row = max(0, t_row - square_height)
     b_row = min(img_h - 1, b_row + square_width)
@@ -72,45 +72,6 @@ def findChessboardCorners(img):
     img_h, img_w = img.shape
     corners = inner_corners_to_cb_corners(inner_corners, img_h, img_w)
     return np.concatenate(corners)
-
-
-def getChessTilesColor(img, corners):
-    # img is a color RGB image
-    # outer_corners = (x0, y0, x1, y1) for top-left corner to bot-right corner of board
-    height, width, depth = img.shape
-    if depth != 3:
-        print("Need RGB color image input")
-        return None
-
-    # outer_corners could be outside image bounds, pad image as needed
-    padl_x = max(0, -corners[0])
-    padl_y = max(0, -corners[1])
-    padr_x = max(0, corners[2] - width)
-    padr_y = max(0, corners[3] - height)
-
-    img_padded = np.pad(img, ((padl_y, padr_y), (padl_x, padr_x), (0, 0)), mode='edge')
-
-    chessboard_img = img_padded[
-                     (padl_y + corners[1]):(padl_y + corners[3]),
-                     (padl_x + corners[0]):(padl_x + corners[2]), :]
-
-    # 256x256 px RGB image, 32x32px individual RGB tiles, normalized 0-1 floats
-    chessboard_img_resized = np.asarray( \
-        PIL.Image.fromarray(chessboard_img) \
-            .resize([256, 256], PIL.Image.BILINEAR), dtype=np.float32) / 255.0
-
-    # stack deep 64 tiles with 3 channesl RGB each
-    # so, first 3 slabs are RGB for tile A1, then next 3 slabs for tile A2 etc.
-    tiles = np.zeros([32, 32, 3 * 64], dtype=np.float32)  # color
-    # Assume A1 is bottom left of image, need to reverse rank since images start
-    # with origin in top left
-    for rank in range(8):  # rows (numbers)
-        for file in range(8):  # columns (letters)
-            # color
-            tiles[:, :, 3 * (rank * 8 + file):3 * (rank * 8 + file + 1)] = \
-                chessboard_img_resized[(7 - rank) * 32:((7 - rank) + 1) * 32, file * 32:(file + 1) * 32]
-
-    return tiles
 
 
 def getChessBoardGray(img, corners):
@@ -132,9 +93,9 @@ def getChessBoardGray(img, corners):
 
     # 256x256 px image, 32x32px individual tiles
     # Normalized
-    chessboard_img_resized = np.asarray( \
-        PIL.Image.fromarray(chessboard_img) \
-            .resize([256, 256], PIL.Image.BILINEAR), dtype=np.uint8) / 255.0
+    chessboard_img_resized = np.asarray(
+        PIL.Image.fromarray(chessboard_img)
+        .resize([256, 256], PIL.Image.BILINEAR), dtype=np.uint8) / 255.0
     return chessboard_img_resized
 
 

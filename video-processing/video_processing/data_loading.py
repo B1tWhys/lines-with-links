@@ -1,12 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Generator
-from PIL import Image
-import cv2
 import logging
-from pytube import YouTube, Stream
+from abc import ABC, abstractmethod
 from functools import cached_property, cache
 from queue import Queue
-from multiprocessing import current_process
+
+import cv2
+from PIL import Image
+from pytube import YouTube, Stream
 
 log = logging.getLogger(__name__)
 

@@ -1,14 +1,15 @@
+import logging
+import multiprocessing as mp
+import threading as thd
+from pathlib import Path
+from typing import Callable
+
 import PIL.Image
 
 from video_processing.data_loading import FrameSource
 from video_processing.db import save_position_sighting
-from video_processing.tensorflow.frame_analyzer import extract_fen, process_tiles
 from video_processing.tensorflow.chessboard_finder import find_grayscale_tiles_in_image
-from typing import Callable
-import logging
-from pathlib import Path
-import multiprocessing as mp
-import threading as thd
+from video_processing.tensorflow.frame_analyzer import process_tiles
 
 log = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
 import pytest
 from typer.testing import CliRunner
+
 from video_processing.db import *
 
 runner = CliRunner()
@@ -20,7 +21,8 @@ class TestPersistence:
         from video_processing import main
 
         result = runner.invoke(main.app,
-                      ["video", "https://www.youtube.com/watch?v=TsR154sQMVo", "--sqlite-db", "--db-password", "foo"])
+                               ["video", "https://www.youtube.com/watch?v=TsR154sQMVo", "--sqlite-db", "--db-password",
+                                "foo"])
         if result.exception:
             raise result.exception
 
@@ -44,7 +46,6 @@ class TestPersistence:
             assert saved_video.length > 0
 
             assert all_processed_video_ids() == ['TsR154sQMVo']
-
 
 
 @pytest.fixture

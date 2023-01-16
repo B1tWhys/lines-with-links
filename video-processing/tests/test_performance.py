@@ -1,12 +1,13 @@
 import timeit
-
-from video_processing.db import init_sqlite_db
-from video_processing.tensorflow.frame_analyzer import extract_fen
 from pathlib import Path
+
 from PIL import Image
+
 from video_processing.data_loading import FileFrameSource
-from video_processing.video_processing_task import VideoProcessingTask
+from video_processing.db import init_sqlite_db
 from video_processing.tensorflow.chessboard_finder import find_grayscale_tiles_in_image
+from video_processing.tensorflow.frame_analyzer import extract_fen
+from video_processing.video_processing_task import VideoProcessingTask
 
 
 def test_performance():
@@ -24,10 +25,12 @@ def test_performance():
     # thread.join()
     # assert 1 == 2
 
+
 def assert_test_image_contains_fen(img_name, expected_fen):
     img_path = Path(__file__).parent / 'test_images' / (img_name + '.png')
     img = Image.open(img_path)
     assert extract_fen(img) == expected_fen
+
 
 # python -m cProfile -o find-cb.prof /home/skyler/.cache/pypoetry/virtualenvs/video-processing-cjBJpIv2-py3.10/bin/pytest -k test_position_extraction_performance; gprof2dot -f pstats find-cb.prof | dot -Tpng -o find-cb.prof.png
 def test_position_extraction_performance():
@@ -39,7 +42,6 @@ def test_position_extraction_performance():
     # fcb8c7d  = 0.00865
     timeit_result = timeit.Timer(lambda: find_grayscale_tiles_in_image(img)).timeit(1000)
     print(f"timeit result: {timeit_result / 1000}")
-
 
 # def test_position_extraction_performance():
 #     img_path = Path(__file__).parent / 'test_images' / 'agadmator_1.png'

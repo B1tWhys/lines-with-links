@@ -1,5 +1,6 @@
-from video_processing.data_loading import YoutubeFrameSource
 from PIL import Image
+
+from video_processing.data_loading import YoutubeFrameSource
 
 
 class TestYoutubeVideoLoading:

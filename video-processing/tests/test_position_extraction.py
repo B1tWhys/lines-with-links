@@ -1,12 +1,10 @@
-import numpy as np
-from pytest import approx
-import cv2
-
-from video_processing.tensorflow.frame_analyzer import extract_fen
-from video_processing.tensorflow.chessboard_finder import findChessboardCorners
-
 from pathlib import Path
+
+import numpy as np
 from PIL import Image
+
+from video_processing.tensorflow.chessboard_finder import findChessboardCorners
+from video_processing.tensorflow.frame_analyzer import extract_fen
 
 
 def assert_test_image_contains_fen(img_name, expected_fen):

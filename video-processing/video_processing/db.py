@@ -1,9 +1,9 @@
-from sqlalchemy import (create_engine,
-                        insert,
-                        exists, Column, String, ForeignKey, Integer, Float, select)
-from sqlalchemy.orm import Session, declarative_base, relationship
-from sqlalchemy.engine import Engine, URL, Row
 import logging
+
+from sqlalchemy import (create_engine,
+                        Column, String, ForeignKey, Integer, Float, select)
+from sqlalchemy.engine import Engine, URL
+from sqlalchemy.orm import Session, declarative_base, relationship
 
 log = logging.getLogger("video_processing")
 
@@ -62,20 +62,35 @@ class PositionSighting(Base):
 def init_sqlite_db() -> Engine:
     """
     Drops everything in a sqlite DB (if it already existed), and recreates
-    the schema from scratch
-    :return: A sqlalchemy Engine for use in tests
+    the schema from scratch. The sqlite db is created on disk at ./testdata.sqlite
+
+    must be called from the main process
+
+    :return: A sqlalchemy Engine (for use in tests)
     """
     global _engine
-    log.warning("Using in-memory DB!")
+    log.info("Initializing fresh sqlite DB at ./testdata.sqlite")
     _engine = create_engine("sqlite+pysqlite:///testdata.sqlite")
     metadata = Base.metadata
     metadata.drop_all(_engine)
     metadata.create_all(_engine)
-    log.debug("In-memory DB configured")
+    log.debug("sqlite DB bootstrapped successfully")
     return _engine
 
 
-def init_db(hostname, port, username, password, dbname):
+def init_postgres_db(hostname, port, username, password, dbname):
+    """
+    Connect to a postgres DB, and create the necessary tables (if they aren't there already)
+
+    must be called from the main process
+
+    :param hostname: hostname to connect to
+    :param port: port to connect to
+    :param username: username for signing in to the DB
+    :param password: password for signing in to the DB
+    :param dbname: the logical database to use
+    :return: None
+    """
     global _engine
     log.info(f"Connecting to db {hostname}:{port}")
     url = URL.create("postgresql+psycopg2",
@@ -85,12 +100,23 @@ def init_db(hostname, port, username, password, dbname):
                      port=port,
                      database=dbname)
     _engine = create_engine(url)
-    log.info("Creating schema (if necessary)")
+    log.debug("Creating schema")
     Base.metadata.create_all(_engine)
-    log.debug("DB configured")
+    log.debug("postgres DB engine bootstrapped successfully")
 
 
 def save_channel(id: str, channel_name: str, channel_url: str):
+    """
+    Persist a channel to the database if it doesn't already exist there. If the channel is already there,
+    do nothing
+
+    must be called from the main process
+
+    :param id: channel id
+    :param channel_name: channel name
+    :param channel_url: channel url
+    :return: None
+    """
     with Session(_engine) as session:
         if session.get(Channel, id) is None:
             log.info(f"Persisting new channel: {id}")
@@ -99,6 +125,19 @@ def save_channel(id: str, channel_name: str, channel_url: str):
 
 
 def save_video(video_id: str, channel_id: str, title: str, thumbnail_url: str, views: int, length: float):
+    """
+    Persist a video to the database if it isn't already there. If the video is there already then simply return
+
+    must be called from the main process
+
+    :param video_id: video id
+    :param channel_id: id of the channel that posted the video
+    :param title: title of the video
+    :param thumbnail_url: url to load the thumbnail of the video
+    :param views: current view count
+    :param length: length of the video in seconds
+    :return: None
+    """
     with Session(_engine) as session:
         if session.get(Video, video_id) is None:
             channel: Channel = session.get(Channel, channel_id)
@@ -108,6 +147,17 @@ def save_video(video_id: str, channel_id: str, title: str, thumbnail_url: str, v
 
 
 def save_position_sighting(video_id: str, fen: str, sec_into_video: float):
+    """
+    Persist a record of a position sighting to the database. The corresponding position and video records
+    must already be there, otherwise a sqlalchemy IntegrityError is raised
+
+    must be called from the main process
+
+    :param video_id: id of the video where the position was observed
+    :param fen: the fen containing the position
+    :param sec_into_video: the number of seconds into the video where the position was observed
+    :return: None
+    """
     with Session(_engine) as session:
         pos_row: Position | None = session.execute(select(Position).where(Position.fen == fen)).scalars().one_or_none()
         sighting: PositionSighting = PositionSighting(video_id=video_id, sec_into_video=sec_into_video)
@@ -120,13 +170,14 @@ def save_position_sighting(video_id: str, fen: str, sec_into_video: float):
         session.commit()
 
 
-def video_already_processed(video_id: str):
-    with Session(_engine) as session:
-        vid = session.execute(select(Video).where(Video.id == video_id)).first()
-        return vid is not None
-
-
 def all_processed_video_ids() -> list[str]:
+    """
+    Get a list of all video id's in the database
+
+    must be called from the main process
+
+    :return: a list of all video id's
+    """
     with Session(_engine) as session:
         ret = list(session.execute(select(Video.id)).scalars().all())
         log.debug(f"All {len(ret)} previously processed video id's received")

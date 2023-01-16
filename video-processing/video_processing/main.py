@@ -1,14 +1,15 @@
-import pytube
-from video_processing.data_loading import YoutubeFrameSource
 import logging
+import multiprocessing as mp
+from multiprocessing.pool import ThreadPool as Pool
+
+import pytube
 import typer
-from video_processing.db import init_sqlite_db, init_db, save_video, save_channel, all_processed_video_ids
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
-from multiprocessing.pool import ThreadPool as Pool
-import multiprocessing as mp
 
-from video_processing.video_processing_task import VideoProcessingTask, handle_failed_video
+from video_processing.data_loading import YoutubeFrameSource
+from video_processing.db import init_sqlite_db, init_postgres_db, save_video, save_channel, all_processed_video_ids
+from video_processing.video_processing_task import VideoProcessingTask
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger('video_processing')
@@ -32,7 +33,7 @@ def video_processing_task_wrapper(vid_url: str):
             in_progress_tasks.add(task)
             task.run()
             in_progress_tasks.remove(task)
-    except Exception as e:
+    except Exception:
         log.exception(f"Failed to process video {vid_url}")
 
 
@@ -47,7 +48,7 @@ def video(url: str,
     if sqlite_db:
         init_sqlite_db()
     else:
-        init_db(db_hostname, db_port, db_username, db_password, db_name)
+        init_postgres_db(db_hostname, db_port, db_username, db_password, db_name)
 
     frame_source = YoutubeFrameSource(url)
     vid = frame_source.yt_video
@@ -74,13 +75,12 @@ def channel(url: str,
     if sqlite_db:
         init_sqlite_db()
     else:
-        init_db(db_hostname, db_port, db_username, db_password, db_name)
+        init_postgres_db(db_hostname, db_port, db_username, db_password, db_name)
 
     channel = pytube.Channel(url)
     save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
     log.info(f"Loading previously processed video ids")
     excl_vid_ids = set(all_processed_video_ids())
-    # video_urls = list(channel.video_urls)
     log.info(f"Loading video list for {channel.channel_name}...")
     video_urls = [v.watch_url for v in channel.videos if v.video_id not in excl_vid_ids]
 

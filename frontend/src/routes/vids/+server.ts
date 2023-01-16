@@ -1,5 +1,5 @@
 import type { RequestHandler } from './$types';
-import { getSightingsOfPosition } from '$lib/server/database';
+import { getSightingsOfPosition, getVideosMatching } from '$lib/server/database';
 import { json } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ url }) => {
@@ -11,6 +11,6 @@ export const GET: RequestHandler = async ({ url }) => {
 	if (firstWhitespace > 0) {
 		fen = fen.substring(0, firstWhitespace);
 	}
-	const data = await getSightingsOfPosition(fen);
+	const data = await getVideosMatching(fen);
 	return json(data);
 };

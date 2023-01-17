@@ -1,6 +1,6 @@
 # [Lines with links](https://lineswithlinks.com)
 
-![Lines with links logo](logo.svg)
+![Lines with links logo](/docs/logo.svg)
 
 ---
 

@@ -9,7 +9,7 @@
 	import type { Api } from 'chessground/api';
 	import { Chess, type Move, type Square } from 'chess.js';
 	import { toColor, toDests } from '$lib/utils';
-	import type { Key, SquareNode } from 'chessground/types';
+	import type { Key } from 'chessground/types';
 	import { fen } from '$lib/stores';
 
 	const chess = new Chess();
@@ -34,24 +34,26 @@
 
 	onMount(() => {
 		cg = Chessground(board, config);
+		fen.subscribe((newFen) => {
+			cg.set({
+				turnColor: toColor(chess),
+				fen: newFen,
+				movable: {
+					color: toColor(chess),
+					dests: toDests(chess)
+				}
+			});
+		});
 	});
 
 	function afterMove(from: Key, to: Key) {
 		chess.move({ from: from as Square, to: to as Square });
 		redoStack = [];
-		syncWithChessGameState();
+		updateFenStore();
 	}
 
-	function syncWithChessGameState() {
+	function updateFenStore() {
 		const newFen = chess.fen();
-		cg.set({
-			turnColor: toColor(chess),
-			fen: newFen,
-			movable: {
-				color: toColor(chess),
-				dests: toDests(chess)
-			}
-		});
 		fen.set(newFen);
 	}
 
@@ -60,7 +62,7 @@
 		const move = chess.undo();
 		if (move) {
 			redoStack.push(move);
-			syncWithChessGameState();
+			updateFenStore();
 		}
 	}
 
@@ -70,7 +72,7 @@
 			console.info('Redoing move');
 			const move = redoStack.pop()!;
 			chess.move(move);
-			syncWithChessGameState();
+			updateFenStore();
 		}
 	}
 

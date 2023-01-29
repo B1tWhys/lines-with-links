@@ -8,12 +8,12 @@
 	const barBubbleClasses = [
 		'h-4',
 		'w-4',
-		'bg-slate-100',
+		'bg-rose-500',
 		'text-blue-500',
 		'rounded-full',
 		'absolute',
 		'-bottom-[150%]',
-		'border-slate-500',
+		'border-rose-800',
 		'border-2'
 	].join(' ');
 
@@ -42,7 +42,7 @@
 			<a
 				class={barBubbleClasses}
 				href={url}
-				style="left: {pxOffset}px; z-index: {i}"
+				style="left: {pxOffset}px; z-index: {Math.min(i, 49)}"
 				target="_blank"
 				rel="noreferrer"
 				on:mouseover={() => (isHovered[i] = true)}

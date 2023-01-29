@@ -10,17 +10,17 @@
 
 <li class="my-2 border border-zinc-900 bg-gray-900 rounded-md px-3 pt-3">
 	<div class="flex flex-row">
-		<a href={url.toString()} class="pr-2 flex-shrink-0" target="_blank" rel="noreferrer">
+		<div class="pr-2 flex-shrink-0">
 			<img
 				class="h-[94px] w-[168px] object-cover rounded-md"
 				src={videoPositions.thumbnailUrl}
 				alt="{videoPositions.videoTitle} - {videoPositions.channelName}"
 			/>
-		</a>
+		</div>
 		<div class="flex-shrink">
-			<a class="text-white font-bold mb-1" href={url.toString()} target="_blank" rel="noreferrer">
+			<div class="text-slate-100 font-bold mb-.5">
 				{videoPositions.videoTitle}
-			</a>
+			</div>
 			<div class="text-slate-300 text-sm">
 				<a href={videoPositions.channelUrl} target="_blank" rel="noreferrer">
 					{videoPositions.channelName}

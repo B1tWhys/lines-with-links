@@ -5,7 +5,6 @@
 	import { fen } from '$lib/stores';
 	import { onMount } from 'svelte';
 	import type VideoPositions from '$lib/types/videoPositions';
-	import VideoList from '$lib/ui/videoList.svelte';
 	import SearchButton from '$lib/ui/searchButton.svelte';
 
 	let videosPromise = updatePositions();

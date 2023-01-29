@@ -36,19 +36,24 @@
 	>
 		<Chessboard />
 	</div>
-	<form on:submit|preventDefault={onFenFormSubmit}>
-		<input class="rounded inline-block" type="text" bind:value={fenInputValue} />
-		<SearchButton />
-	</form>
 	{#await videosPromise}
 		<div class="text-slate-100 text-lg w-full h-full flex justify-center items-center">
 			loading...
 		</div>
 	{:then videos}
-		<ul class="overflow-y-scroll overflow-x-hidden px-3">
-			{#each videos as positions (positions.videoId)}
-				<VideoListItem videoPositions={positions} />
-			{/each}
-		</ul>
+		<div class="overflow-y-scroll overflow-x-hidden max-h-screen relative">
+			<form
+				on:submit|preventDefault={onFenFormSubmit}
+				class="sticky top-0 bg-slate-800 z-50 p-3 shadow-md flex justify-center gap-2 xl:justify-start"
+			>
+				<input class="rounded inline-block w-80" type="text" bind:value={fenInputValue} />
+				<SearchButton />
+			</form>
+			<ul class="px-3">
+				{#each videos as positions (positions.videoId)}
+					<VideoListItem videoPositions={positions} />
+				{/each}
+			</ul>
+		</div>
 	{/await}
 </div>

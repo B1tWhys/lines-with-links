@@ -3,7 +3,7 @@ name = "video-processing"
 version = "0.1.0"
 description = ""
 authors = ["skyler arnold <skyarnold1@me.com>"]
-readme = "README.md"
+# readme = "README.md"
 packages = [{include = "video_processing"}]
 
 [tool.poetry.dependencies]
@@ -11,7 +11,7 @@ python = ">=3.10, <3.12"
 scipy = "^1.9.3"
 numpy = "^1.24.0"
 pillow = "^9.3.0"
-tensorflow = "^2.11.0"
+tensorflow = "^2.13.0"
 opencv-python = "^4.6.0.66"
 typer = "^0.7.0"
 psycopg2 = "^2.9.5"
@@ -21,6 +21,7 @@ tqdm = "^4.64.1"
 # is merged so that the new youtube URL format is supported
 pytube = { git = "https://github.com/felipeucelli/pytube", rev = "357a092c63b766db24c2e5060f3c3866dd20a497" }
 pandas = "^1.5.2"
+tensorflow-macos = "^2.13.0"
 
 
 [tool.poetry.group.dev.dependencies]

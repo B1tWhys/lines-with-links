@@ -19,9 +19,11 @@ sqlalchemy = "^1.4.45"
 tqdm = "^4.64.1"
 # FIXME: depend on mainline pytube once https://github.com/pytube/pytube/pull/1422
 # is merged so that the new youtube URL format is supported
-pytube = { git = "https://github.com/felipeucelli/pytube", rev = "357a092c63b766db24c2e5060f3c3866dd20a497" }
+# pytube = "^15.0.0"
+#pytube = { git = "https://github.com/felipeucelli/pytube", rev = "2ff84938cddd02a78053204517389374f5be7019" }
 pandas = "^1.5.2"
 tensorflow-macos = "^2.13.0"
+yt-dlp = "^2023.7.6"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -1,11 +1,13 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, cache
+from multiprocessing import current_process
 from queue import Queue
+from typing import Optional
 
 import cv2
 from PIL import Image
-from pytube import YouTube, Stream
+from yt_dlp import YoutubeDL
 
 log = logging.getLogger(__name__)
 
@@ -54,22 +56,24 @@ class FrameSource(ABC):
     def current_sec_into_video(self) -> float:
         return self.current_frame / self.fps
 
-    def stream_frames(self) -> None:
+    def stream_frames(self, stop_after_frames: Optional[int] = None) -> None:
         """
-        Stream the video source into PIL images
-        :param source: A string of either a file path, or a URL to download the video from
+        Stream the video source into PIL images. Blocks until complete, and outputs to `self.img_output_queue`
         """
         try:
             cap = cv2.VideoCapture(self._source)
-            # print(f"hello from frame source in pid {current_process().pid}")
+            log.debug(f"hello from frame source in pid {current_process().pid}")
             if not cap.isOpened():
                 exception = VideoProcessingException(f"Video capture failed to open: {self._source}")
                 self.img_output_queue.put(exception)
                 return
 
             log.debug(f"Opencv video capture opened for {self._source}")
-            while cap.isOpened() and self.running:
-                # print(f"frame source is working in pid {current_process().pid}")
+            # while the video is open, the task is still going, and we haven't passed the `stop_after_frames` arg
+            while cap.isOpened() and \
+                    self.running and \
+                    (stop_after_frames is None or self.current_frame < stop_after_frames):
+                log.debug(f"frame source is working in pid {current_process().pid}")
                 ret, cv2_img = cap.read()
                 if ret:
                     self.current_frame += 1
@@ -84,36 +88,42 @@ class FrameSource(ABC):
 
 
 class YoutubeFrameSource(FrameSource):
-    yt_video: YouTube
-    _stream: Stream
-
     def __init__(self, video_url: str, resolution='480p', subtype='mp4'):
         super().__init__()
-        self.yt_video = YouTube(video_url)
-        self._stream = self.__find_stream(resolution, subtype)
+        self._url = video_url
+        self._info = self.__get_vid_info()
+        self._format = self.__find_format(resolution, subtype)
 
-    def __find_stream(self, resolution, subtype):
-        stream = self.yt_video.streams.filter(only_video=True, res=resolution, subtype=subtype).first()
-        if stream is None:
-            raise VideoProcessingException(f"Failed to process {self.yt_video.video_id}, no worthy streams found. "
-                                           f"Available streams were: {self.yt_video.streams}")
-        return stream
+    def __get_vid_info(self):
+        ytdl_opts = {"quiet": True}
+        with YoutubeDL(ytdl_opts) as ydl:
+            info = ydl.extract_info(self._url, download=False)
+            return ydl.sanitize_info(info)
+
+    def __find_format(self, resolution, subtype):
+        formats = self._info['formats']
+        for fmt in formats:
+            if fmt.get('format_note', '') == resolution and fmt.get('ext', '') == subtype:
+                return fmt
+        else:
+            raise VideoProcessingException(f"Failed to process {self._info['id']}, no worthy streams found. "
+                                           f"Available streams were: {[f['format'] for f in formats]}")
 
     @cache
     def __len__(self):
-        return self.yt_video.length * self.fps
+        return self._info['duration']
 
     @cached_property
     def _source(self) -> str:
-        return self._stream.url
+        return self._format['url']
 
     @cached_property
     def fps(self) -> float:
-        return self._stream.fps
+        return self._format['fps']
 
     @cached_property
     def video_id(self) -> str:
-        return self.yt_video.video_id
+        return self._info['id']
 
 
 class FileFrameSource(FrameSource):

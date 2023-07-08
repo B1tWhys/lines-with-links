@@ -66,7 +66,6 @@ class VideoProcessingTask:
             img_queue = self.frame_source.img_output_queue
             while True:
                 img = img_queue.get()
-                # print(f"hello from child process, my pid is: {mp.current_process().pid}")
                 if img is None:
                     break
                 elif issubclass(type(img), Exception):

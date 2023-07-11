@@ -85,28 +85,28 @@ def video(url: str,
             task.run()
 
 
-@app.command()
-def channel(url: str,
-            threads: int,
-            db_hostname: str = typer.Option("localhost", envvar="DB_HOSTNAME"),
-            db_username: str = typer.Option("postgres", envvar="DB_USERNAME"),
-            db_password: str = typer.Option(..., prompt=True, hide_input=True, envvar="DB_PASSWORD"),
-            db_port: int = typer.Option(default=5432, envvar="DB_PORT"),
-            db_name: str = typer.Option("postgres", envvar="DB_NAME"),
-            sqlite_db: bool = typer.Option(False)):
-    if sqlite_db:
-        init_sqlite_db()
-    else:
-        init_postgres_db(db_hostname, db_port, db_username, db_password, db_name)
-
-    channel = pytube.Channel(url)
-    save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
-    log.info(f"Loading previously processed video ids")
-    excl_vid_ids = set(all_processed_video_ids())
-    log.info(f"Loading video list for {channel.channel_name}...")
-    video_urls = [v.watch_url for v in channel.videos if v.video_id not in excl_vid_ids]
-    bar_description = channel.channel_name
-    process_videos(video_urls, threads, bar_description)
+# @app.command()
+# def channel(url: str,
+#             threads: int,
+#             db_hostname: str = typer.Option("localhost", envvar="DB_HOSTNAME"),
+#             db_username: str = typer.Option("postgres", envvar="DB_USERNAME"),
+#             db_password: str = typer.Option(..., prompt=True, hide_input=True, envvar="DB_PASSWORD"),
+#             db_port: int = typer.Option(default=5432, envvar="DB_PORT"),
+#             db_name: str = typer.Option("postgres", envvar="DB_NAME"),
+#             sqlite_db: bool = typer.Option(False)):
+#     if sqlite_db:
+#         init_sqlite_db()
+#     else:
+#         init_postgres_db(db_hostname, db_port, db_username, db_password, db_name)
+#
+#     channel = pytube.Channel(url)
+#     save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
+#     log.info(f"Loading previously processed video ids")
+#     excl_vid_ids = set(all_processed_video_ids())
+#     log.info(f"Loading video list for {channel.channel_name}...")
+#     video_urls = [v.watch_url for v in channel.videos if v.video_id not in excl_vid_ids]
+#     bar_description = channel.channel_name
+#     process_videos(video_urls, threads, bar_description)
 
 
 @app.command()

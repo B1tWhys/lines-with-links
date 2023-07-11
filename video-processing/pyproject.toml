@@ -24,6 +24,7 @@ tqdm = "^4.64.1"
 pandas = "^1.5.2"
 tensorflow-macos = "^2.13.0"
 yt-dlp = "^2023.7.6"
+pytube = "^15.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

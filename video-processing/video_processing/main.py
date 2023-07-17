@@ -32,9 +32,9 @@ def video_processing_task_wrapper(vid_url: str):
 
         with tqdm(total=len(frame_source), smoothing=.2) as bar:
             bar.set_description(vid_url)
-            task = VideoProcessingTask(frame_source, lambda: bar.update(1))
+            task = VideoProcessingTask(frame_source)
             in_progress_tasks.add(task)
-            task.run()
+            task.run(lambda: bar.update(1))
             in_progress_tasks.remove(task)
     except Exception:
         log.exception(f"Failed to process video {vid_url}")
@@ -73,16 +73,20 @@ def video(url: str,
         init_postgres_db(db_hostname, db_port, db_username, db_password, db_name)
 
     frame_source = YoutubeFrameSource(url)
-    vid = frame_source.yt_video
-    log.info(f"Processing video: {vid.title}")
-    channel = pytube.Channel(vid.channel_url)
+    log.info(f"Processing video: {frame_source.title}")
+    channel = pytube.Channel(frame_source.channel_url)
     save_channel(channel.channel_id, channel.channel_name, channel.channel_url)
-    save_video(vid.video_id, vid.channel_id, vid.title, vid.thumbnail_url, vid.views, vid.length)
+    save_video(frame_source.video_id,
+               frame_source.channel_id,
+               frame_source.title,
+               frame_source.thumbnail_url,
+               frame_source.views,
+               int(len(frame_source) / frame_source.fps))
 
     with logging_redirect_tqdm():
         with tqdm(total=len(frame_source), smoothing=.1) as bar:
-            task = VideoProcessingTask(frame_source, lambda: bar.update(1))
-            task.run()
+            task = VideoProcessingTask(frame_source)
+            task.run(lambda: bar.update(1))
 
 
 # @app.command()

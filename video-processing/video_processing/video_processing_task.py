@@ -40,11 +40,10 @@ class VideoProcessingTask:
     running: bool
     _tile_queue: mp.Queue
 
-    def __init__(self, frame_source: FrameSource, frame_processed_callback: Callable[[], None] = None):
+    def __init__(self, frame_source: FrameSource):
         self.frame_source = frame_source
         self.running = True
         self._tile_queue = mp.Queue(maxsize=30)
-        self._frame_processed_callback = frame_processed_callback
 
     @property
     def video_id(self):
@@ -79,7 +78,7 @@ class VideoProcessingTask:
         finally:
             self._tile_queue.put("done", timeout=1)
 
-    def run(self):
+    def run(self, frame_processed_callback: Callable[[], None] = None):
         tile_loading_process = mp.Process(target=self._stream_cb_tile_tensors)
         log.info(f"Starting subprocess from {mp.current_process().pid} for {self.video_id}")
         tile_loading_process.start()
@@ -97,8 +96,8 @@ class VideoProcessingTask:
                 frame_num += 1
                 sec_into_video = (frame_num - 10) / self.frame_source.fps
 
-                if self._frame_processed_callback is not None:
-                    self._frame_processed_callback()
+                if frame_processed_callback is not None:
+                    frame_processed_callback()
 
                 if tiles is None:
                     log.debug(f"{self.video_id}: No position for frame {frame_num} ({sec_into_video:0.3f}s), skipping")

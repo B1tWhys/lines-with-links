@@ -22,7 +22,6 @@ tqdm = "^4.64.1"
 # pytube = "^15.0.0"
 #pytube = { git = "https://github.com/felipeucelli/pytube", rev = "2ff84938cddd02a78053204517389374f5be7019" }
 pandas = "^1.5.2"
-tensorflow-macos = "^2.13.0"
 yt-dlp = "^2023.7.6"
 pytube = "^15.0.0"
 

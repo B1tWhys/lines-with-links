@@ -1,8 +1,8 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import cached_property, cache
-from multiprocessing import current_process
-from queue import Queue
+from multiprocessing import current_process, Queue
+# from queue import Queue
 from typing import Optional
 
 import cv2
@@ -50,6 +50,31 @@ class FrameSource(ABC):
     @property
     @abstractmethod
     def video_id(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def title(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def channel_url(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def thumbnail_url(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def views(self) -> int:
+        pass
+
+    @property
+    @abstractmethod
+    def channel_id(self) -> str:
         pass
 
     @property
@@ -125,11 +150,48 @@ class YoutubeFrameSource(FrameSource):
     def video_id(self) -> str:
         return self._info['id']
 
+    @cached_property
+    def title(self) -> str:
+        return self._info['title']
+
+    @property
+    def channel_url(self) -> str:
+        return self._info['channel_url']
+
+    @property
+    def thumbnail_url(self) -> str:
+        return self._info['thumbnail']
+
+    @property
+    def views(self) -> int:
+        return self._info['view_count']
+
+    @property
+    def channel_id(self):
+        return self._info['channel_id']
+
 
 class FileFrameSource(FrameSource):
     """
     Only used in tests
     """
+
+    @property
+    def channel_id(self) -> str:
+        return "test-channel"
+
+    @property
+    def channel_url(self) -> str:
+        return "http://example.com"
+
+    @property
+    def thumbnail_url(self) -> str:
+        return "http://example.com"
+
+    @property
+    def views(self) -> int:
+        pass
+
     file_path: str
 
     def __init__(self, file_path: str):
@@ -151,3 +213,7 @@ class FileFrameSource(FrameSource):
     @property
     def video_id(self) -> str:
         return "testvideo"
+
+    @property
+    def title(self) -> str:
+        return self.file_path

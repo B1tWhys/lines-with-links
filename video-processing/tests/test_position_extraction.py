@@ -22,8 +22,7 @@ def test_position_extraction():
     assert_test_image_contains_fen('gothamchess_1', 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR')
     assert_test_image_contains_fen('gothamchess_2', 'rnbq3r/ppp1pkb1/6p1/2PP2Pp/2B2BnP/2N2Q2/PP3P2/R3K2R')
     assert_test_image_contains_fen('gothamchess_3', None)
-    assert_test_image_contains_fen('naroditsky_1', 'r1bq1rk1/pp3ppp/2nb1n2/2p5/2B5/3P1N2/PP3PPP/RNBQ1RK1')
-    # assert_test_image_contains_fen('agadmator_1', '2q1rb2/pR3pkr/3p2pN/2nPp1QP/1nB1P1b1/6N1/PBP3P1/5RK1')
+    assert_test_image_contains_fen('naroditsky_1', 'r1bqkbnr/pp1ppppp/2n5/2p4Q/2B1P3/8/PPPP1PPP/RNB1K1NR')
 
 
 def assert_find_chessboard_corners_result(img_name: str, expected_corners: np.array):

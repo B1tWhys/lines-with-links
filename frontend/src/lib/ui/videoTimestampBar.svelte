@@ -4,6 +4,9 @@
 
 	export let positionSightings: [PositionSightingMetadata];
 	export let videoBaseUrl: URL;
+	export let showHint: Boolean;
+
+	$: hintBubbleIdx = showHint ? positionSightings.length / 2 : null;
 
 	const barBubbleClasses = [
 		'h-4',
@@ -12,7 +15,7 @@
 		'text-blue-500',
 		'rounded-full',
 		'absolute',
-		'-bottom-[150%]',
+		'-bottom-[10px]',
 		'border-rose-800',
 		'border-2'
 	].join(' ');
@@ -37,23 +40,30 @@
 		{#each positionSightings as sighting, i (sighting.videoId + sighting.secIntoVideo)}
 			{@const pxOffset = pxOffsets[i]}
 			{@const showTimestamp = isHovered[i]}
+			{@const dispHint = hintBubbleIdx == i}
 			{@const url = urls[i]}
-			<!-- svelte-ignore a11y-mouse-events-have-key-events -->
-			<a
-				class={barBubbleClasses}
-				href={url}
-				style="left: {pxOffset}px; z-index: {Math.min(i, 49)}"
-				target="_blank"
-				rel="noreferrer"
-				on:mouseover={() => (isHovered[i] = true)}
-				on:mouseout={() => (isHovered[i] = false)}
-			>
+			<div class="absolute" style="left: {pxOffset}px; z-index: {Math.min(i, 49)}">
 				{#if showTimestamp}
 					<div class="absolute bottom-3 text-slate-100 text-center text-sm -translate-x-1/3">
 						{timestamps[i]}
 					</div>
+				{:else if dispHint}
+					<div
+						class="absolute bottom-3 text-gray-800 text-center text-sm bg-white rounded-sm w-36 p-1 mb-2 -translate-x-1/2"
+					>
+						Hint: Try clicking on these red bubbles<br />&#128071;
+					</div>
 				{/if}
-			</a>
+				<!-- svelte-ignore a11y-mouse-events-have-key-events -->
+				<a
+					class={barBubbleClasses}
+					href={url}
+					target="_blank"
+					rel="noreferrer"
+					on:mouseover={() => (isHovered[i] = true)}
+					on:mouseout={() => (isHovered[i] = false)}
+				/>
+			</div>
 		{/each}
 	</div>
 </div>
